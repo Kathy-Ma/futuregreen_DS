@@ -31,9 +31,9 @@ import pandas as pd
 
 
 class GarbageClassificationModel:
-    def __init__(self, dataset_manager, learning_rate):
+    def __init__(self, dataset_manager):
         self.dataset_manager: DatasetManager = dataset_manager
-        self.learning_rate: float = learning_rate
+        self.learning_rate: float = 0.0001
         self.model: models.Sequential = self.create_model()
     
 

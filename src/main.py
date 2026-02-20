@@ -39,7 +39,7 @@ if __name__ == "__main__":
     dl.split_data(50, 25, 25)
 
 
-    m = GarbageClassificationModel(dl, 0.0001)
+    m = GarbageClassificationModel(dl)
 
     model_history = m.train_model(epochs=1, export_path="model_directory/test.keras")
     m.plot_history(model_history)
