@@ -2,7 +2,7 @@
 Repo for data science team
 
 To run this project, we will use virtual environments to ensure that library versions are consistent across the entire team
-- before doing so, make sure you have python 3.11 downloaded
+- before doing so, make sure you have python 3.11 downloaded ([link](https://www.python.org/downloads/release/python-3119/))
   - this seems to be the best version of python you can use
 
 How to activate your virtual environment:
@@ -14,5 +14,5 @@ How to activate your virtual environment:
    - you should see `(.venv)` in the terminal after activating
 4) Run `pip install --upgrade pip && pip install -r requirements.txt` to install the libraries into the virtual environment
 
-You are now in the virutal environment!
+You are now in the virutal environment! This is where you run the code with the correct libraries
 - to get out of the virtual environment, run `deactivate`
