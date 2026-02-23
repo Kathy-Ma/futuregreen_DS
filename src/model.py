@@ -34,12 +34,15 @@ class GarbageClassificationModel:
     def __init__(self, dataset_manager):
         self.dataset_manager: DatasetManager = dataset_manager
         self.learning_rate: float = 0.0001
-        self.model: models.Sequential = self.create_model()
+        
+        # set up the model to start training process
+        self.compile_model()
     
 
     def create_model(self):
         '''
         This function creates a CNN model for trash classification
+        It assigns the created model to the class's "model" property
 
         Returns:
             model: the CNN model
@@ -57,16 +60,31 @@ class GarbageClassificationModel:
         model.add(layers.MaxPooling2D((2,2)))
         model.add(layers.Flatten())
         model.add(layers.Dropout(0.5))
-        model.add(layers.Dense(6, activation='softmax'))
+        model.add(layers.Dense(8, activation='softmax'))
+
+        self.model = model
+
+
+    
+    def compile_model(self):
+        '''
+        This function creates and compiles a model, preparing it for training and testing
+
+        Returns:
+            model: the CNN model
+        '''
+
+        # define the model's architecture
+        self.create_model()
 
         # configure the model
-        model.compile(
-            optimizer=optimizers.RMSprop(self.learning_rate),
+        self.model.compile(
+            optimizer=optimizers.Adam(self.learning_rate),
             loss='categorical_crossentropy',
             metrics=['acc']
         )
-    
-        return model
+
+
 
     def train_model(self, epochs=50, export_path=None):
         early_stop = EarlyStopping(
@@ -97,35 +115,7 @@ class GarbageClassificationModel:
 
         return model_history_es
     
-
-
-    def predict_img(self, img_path):
-        img = cv2.imread(img_path, cv2.IMREAD_COLOR_RGB)
-        # reshape
-        img = cv2.resize(img, (150, 150))
-        # normalize
-        img = img / 255.0
-
-        # img.reshape(1, 150, 150, 3) does not work
-        img_for_prediction = np.expand_dims(img, axis=0)
-
-        # predict
-        prediction = self.model.predict(img_for_prediction)
-        y_pred = np.argmax(prediction, axis=1)
-        cat_pre = self.dataset_manager.get_categories()[y_pred[0]] # why we use pred[0]?
-
-        plt.figure(figsize=(6, 4))
-
-        # format prediction text
-        plt.title(f'Pred: {cat_pre.upper()}', fontsize=10)
-
-        # Display image (Note: image is already scaled to 0-1)
-        plt.imshow(img)
-        plt.axis('off')
-        plt.show()
-        return
-
-
+    
 
     def plot_history(self, model_history):
         # plot training and validation curves (Accuracy and Loss)
@@ -133,19 +123,19 @@ class GarbageClassificationModel:
         val_acc = model_history.history['val_acc']
         loss = model_history.history['loss']
         val_loss = model_history.history['val_loss']
-
-        epoch_num = range(1, len(acc) +1)
-
+        epoch_num = range(1, len(acc) + 1)
         plt.figure(figsize = (10, 3))
-        #Train and validation accuracy
+        
+        # train and validation accuracy
         plt.subplot(121)
-        plt.plot(epoch_num, acc, 'b', label='Training accurarcy')
-        plt.plot(epoch_num, val_acc, 'r', label='Validation accurarcy')
-        plt.title('Training and Validation accurarcy')
+        plt.plot(epoch_num, acc, 'b', label='Training accuracy')
+        plt.plot(epoch_num, val_acc, 'r', label='Validation accuracy')
+        plt.title('Training and Validation accuracy')
         plt.legend()
 
         plt.subplot(122)
-        #Train and validation loss
+
+        # train and validation loss
         plt.plot(epoch_num, loss, 'b', label='Training loss')
         plt.plot(epoch_num, val_loss, 'r', label='Validation loss')
         plt.title('Training and Validation loss')
@@ -175,7 +165,7 @@ class GarbageClassificationModel:
         prediction = self.model.predict(x_test)
         y_pred = np.argmax(prediction, axis=1)
 
-        # Print metrics
+        # print metrics
         print("Accuracy:", accuracy_score(y_true, y_pred))
         print("\n Classification Report:\n", classification_report(y_true, y_pred))
         print("\n Confusion Matrix:\n", confusion_matrix(y_true, y_pred))

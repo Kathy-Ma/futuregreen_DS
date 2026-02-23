@@ -40,7 +40,7 @@ class DatasetManager:
         """
         # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
         # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
-        return ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
+        return ["cardboard", "glass", "metal", "paper", "plastic", "trash", "organics", "rejected"]
 
     
 
@@ -113,7 +113,7 @@ class DatasetManager:
         xTrain, xTest, yTrain, yTest = train_test_split(
             np.asarray(self.data_x),
             self.data_y,
-            test_size=0.5, # TODO: fix here
+            test_size=0.8, # TODO: fix here
             shuffle=True,
             random_state = state_num
         )
