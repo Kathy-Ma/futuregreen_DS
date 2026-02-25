@@ -67,6 +67,8 @@ class DatasetManager:
         """
         Given the dataset_path, standardize the images and load them with their labels into two arrays (data_x and data_y)
         """
+
+        # TODO: split the data evenly between each category
         data_array_x, data_array_y = [], []
         dataset_categories = self.get_categories()
         for category in tqdm(dataset_categories):
