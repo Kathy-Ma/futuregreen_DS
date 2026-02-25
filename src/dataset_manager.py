@@ -115,7 +115,7 @@ class DatasetManager:
         xTrain, xTest, yTrain, yTest = train_test_split(
             np.asarray(self.data_x),
             self.data_y,
-            test_size=0.8, # TODO: fix here
+            test_size=train_ratio/100, # TODO: fix here
             shuffle=True,
             random_state = state_num
         )
@@ -125,7 +125,7 @@ class DatasetManager:
             xTest, xVal, yTest, yVal = train_test_split(
                 xTest,
                 yTest,
-                test_size=0.5, # fix here
+                test_size=test_ratio/test_ratio+val_ratio, # finds ratio between both values
                 shuffle=True,
                 random_state = state_num
             )
