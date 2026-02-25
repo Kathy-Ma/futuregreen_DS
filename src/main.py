@@ -35,18 +35,18 @@ if __name__ == "__main__":
     NORMALIZED_IMAGE_SIZE = (150, 150)
 
     # initialize the dataset loader and get the split datasets
-    # dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
-    # dl.load_data()
-    # dl.split_data(80, 10, 10)
+    dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
+    dl.load_data()
+    dl.split_data(80, 10, 10)
 
     # base model architecture (not that good, ~40% accuracy)
-    # m = GarbageClassificationModel(dl)
-    # model_history = m.train_model(epochs=20, export_path="model_registry/test.keras")
-    # m.plot_history(model_history)
-    # m.measure_metrics()
+    m = GarbageClassificationModel(dl)
+    model_history = m.train_model(epochs=20, export_path="model_registry/test.keras")
+    m.plot_history(model_history)
+    m.measure_metrics()
 
     # using transfer learning
-    dl2 = DatasetManager(DATASET_DIR, (224, 224))
-    dl2.load_data()
-    dl2.split_data(80, 10, 10)
-    m2 = TransferLearningModel(dl2)
+    # dl2 = DatasetManager(DATASET_DIR, (224, 224))
+    # dl2.load_data()
+    # dl2.split_data(80, 10, 10)
+    # m2 = TransferLearningModel(dl2)

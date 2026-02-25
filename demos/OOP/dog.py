@@ -3,7 +3,6 @@ Objective: create a dog with a name, a colour, and a greeting
 """
 
 
-
 dog1Name = "Bob"
 dog1Colour = "Black"
 dog1Greeting = "Woof"
@@ -11,8 +10,6 @@ dog1Greeting = "Woof"
 dog2Name = "Orange"
 dog2Colour = "Orange"
 dog2Greeting = "Woof"
-
-
 
 
 
@@ -39,9 +36,6 @@ d5 = Dog("Bob", "Black")
 d6 = Dog("Bob", "Black")
 d7 = Dog("Bob", "Black")
 
-d2.name
-
-
 print("\nPRINTING DOG (with OOP)")
 print(d1.name)
 print(d1.colour)
@@ -49,6 +43,8 @@ print(d1.greeting)
 
 d1.say_hello()
 d1.get_info()
+
+print()
 
 
 
