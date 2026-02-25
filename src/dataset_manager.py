@@ -106,26 +106,20 @@ class DatasetManager:
         assert(train_ratio >= 0 and test_ratio >= 0 and val_ratio >= 0)
         assert(train_ratio + test_ratio + val_ratio == 100)
 
-        # TODO: split the data according to the ratios, and return the split data as shown in the return statement
-        # the train_test_split function only splits into two groups, so we ned to call this function twice to split into three groups
-        # this fix just requires a bit of math
-        # alternatively, you can implement the splitting yourself without the sklearn function
-
         # split between train and test
         xTrain, xTest, yTrain, yTest = train_test_split(
             np.asarray(self.data_x),
             self.data_y,
-            test_size=train_ratio/100, # TODO: fix here
+            test_size=train_ratio/100,
             shuffle=True,
             random_state = state_num
         )
 
-        # TODO: split between train and validation (or test and validation, whichever you see fit)
         if val_ratio != 0: # val_ratio = 0 means that no validation set needed
             xTest, xVal, yTest, yVal = train_test_split(
                 xTest,
                 yTest,
-                test_size=test_ratio/test_ratio+val_ratio, # finds ratio between both values
+                test_size=test_ratio/(test_ratio+val_ratio), # finds ratio between both values
                 shuffle=True,
                 random_state = state_num
             )
