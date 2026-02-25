@@ -5,7 +5,6 @@ Repo for data science team
 To run this project, we will use virtual environments to ensure that library versions are consistent across the entire team
 - before doing so, make sure you have python 3.11 downloaded ([link](https://www.python.org/downloads/release/python-3119/))
   - this seems to be the best version of python you can use
-  - for Windows, check "Add Python to PATH" during installation (??? questionable)
 
 How to activate your virtual environment in VSCode:
 1) From the project root, run `py -3.11 -m venv .venv` (Windows) or `python3.11 -m venv .venv` (Mac)
