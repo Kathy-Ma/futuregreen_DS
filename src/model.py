@@ -48,19 +48,24 @@ class GarbageClassificationModel:
             model: the CNN model
         '''
 
-        # define the model's architecture    
+        dm = self.dataset_manager
+        num_categories = len(dm.get_categories())
+
+        # define the model's architecture
         model = models.Sequential()
-        model.add(layers.Conv2D(32, (3,3), activation='relu', input_shape=(150, 150, 3)))
+        model.add(layers.Conv2D(32, (3,3), activation='relu', input_shape=(dm.img_size[0], dm.img_size[1], 3)))
         model.add(layers.MaxPooling2D((2,2)))
-        model.add(layers.Dropout(0.5))
+
         model.add(layers.Conv2D(64, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))
-        model.add(layers.Dropout(0.5))
+
         model.add(layers.Conv2D(128, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))
+
         model.add(layers.Flatten())
+        model.add(layers.Dense(128, activation='relu'))
         model.add(layers.Dropout(0.5))
-        model.add(layers.Dense(8, activation='softmax'))
+        model.add(layers.Dense(num_categories, activation='softmax'))
 
         self.model = model
 
@@ -81,12 +86,12 @@ class GarbageClassificationModel:
         self.model.compile(
             optimizer=optimizers.Adam(self.learning_rate),
             loss='categorical_crossentropy',
-            metrics=['acc']
+            metrics=['accuracy']
         )
 
 
 
-    def train_model(self, epochs=50, export_path=None):
+    def train_model(self, epochs=50, batch_size=32, export_path=None):
         early_stop = EarlyStopping(
             monitor='val_loss',     # Monitor validation loss
             patience=5,             # Number of epochs with no improvement after which training will be stopped
@@ -95,17 +100,16 @@ class GarbageClassificationModel:
 
         # set up generators to use later for training and evaluation
         dm = self.dataset_manager
-        train_generator = utils.create_data_generator(dm.train_data_x, dm.train_data_y, only_normalize=False)
-        test_generator = utils.create_data_generator(dm.test_data_x, dm.test_data_y)
-        val_generator = utils.create_data_generator(dm.val_data_x, dm.val_data_y)
 
         start_time = time.time()
-        model_history_es = self.model.fit(train_generator,
-                                steps_per_epoch=len(dm.train_data_x)//32,
-                                epochs=epochs,
-                                validation_data=val_generator,
-                                validation_steps=len(dm.val_data_x)//32,
-                                callbacks = [early_stop])
+        model_history = self.model.fit(
+            dm.train_data_x,
+            dm.train_data_y,
+            validation_data=(dm.val_data_x, dm.val_data_y),
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=[early_stop]
+        )
         end_time = time.time()
         print(f'Training time: {end_time - start_time:.2f} seconds')
         print(f'Training time: {(end_time - start_time)/60:.2f} mins')
@@ -113,7 +117,7 @@ class GarbageClassificationModel:
         if export_path is not None:
             self.model.save(export_path)
 
-        return model_history_es
+        return model_history
     
     
 

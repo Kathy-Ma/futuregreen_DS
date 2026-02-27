@@ -58,8 +58,9 @@ class DatasetManager:
         # TODO: replace this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
-        new_array = cv2.resize(img_array, self.img_size)
-        return new_array
+        img_array = cv2.resize(img_array, self.img_size)
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        return img_array
     
 
 
@@ -110,7 +111,7 @@ class DatasetManager:
         xTrain, xTest, yTrain, yTest = train_test_split(
             np.asarray(self.data_x),
             self.data_y,
-            test_size=train_ratio/100,
+            test_size=(test_ratio + val_ratio)/100,
             shuffle=True,
             random_state = state_num
         )
@@ -119,7 +120,7 @@ class DatasetManager:
             xTest, xVal, yTest, yVal = train_test_split(
                 xTest,
                 yTest,
-                test_size=test_ratio/(test_ratio+val_ratio), # finds ratio between both values
+                test_size=val_ratio/(test_ratio+val_ratio), # finds ratio between both values
                 shuffle=True,
                 random_state = state_num
             )
