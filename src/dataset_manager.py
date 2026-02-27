@@ -83,6 +83,9 @@ class DatasetManager:
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
         
+        from collections import Counter
+        print(Counter(data_array_y))
+        
         # convert from category names -> numeric labels (integers) -> one-hot-encoding (0s and 1s)
         encoder = LabelEncoder()
         encoded_y = encoder.fit_transform(data_array_y)
@@ -91,8 +94,8 @@ class DatasetManager:
         # load in the data from dataset_path
         # data_y is one-hot-encoded (0s and 1s)
         # Images are normalized in standardize_image()
-        self.data_x = data_array_x
-        self.data_y = one_hot_encoded_y
+        self.data_x = np.asarray(data_array_x)
+        self.data_y = np.asarray(one_hot_encoded_y)
     
 
 

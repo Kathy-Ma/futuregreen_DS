@@ -37,8 +37,6 @@ if __name__ == "__main__":
     # initialize the dataset loader and get the split datasets
     dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
     dl.load_data()
-
-    print(len(dl.data_x), len(dl.data_y))
     dl.split_data(80, 10, 10)
 
     # base model architecture (not that good, ~40% accuracy)
