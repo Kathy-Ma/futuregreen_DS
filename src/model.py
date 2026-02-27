@@ -33,7 +33,7 @@ import pandas as pd
 class GarbageClassificationModel:
     def __init__(self, dataset_manager):
         self.dataset_manager: DatasetManager = dataset_manager
-        self.learning_rate: float = 0.0001
+        self.learning_rate: float = 0.001  # Match main2.py for ~58% accuracy
         
         # set up the model to start training process
         self.compile_model()
@@ -53,14 +53,19 @@ class GarbageClassificationModel:
 
         # define the model's architecture
         model = models.Sequential()
-        model.add(layers.Conv2D(32, (3,3), activation='relu', input_shape=(dm.img_size[0], dm.img_size[1], 3)))
+        model.add(layers.Input(shape=(dm.img_size[0], dm.img_size[1], 3)))
+
+        model.add(layers.Conv2D(32, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))
+        model.add(layers.Dropout(0.5))
 
         model.add(layers.Conv2D(64, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))
+        model.add(layers.Dropout(0.5))
 
         model.add(layers.Conv2D(128, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))
+        model.add(layers.Dropout(0.5))
 
         model.add(layers.Flatten())
         model.add(layers.Dense(128, activation='relu'))
@@ -92,16 +97,22 @@ class GarbageClassificationModel:
 
 
     def train_model(self, epochs=50, batch_size=32, export_path=None):
+        # if the file already exists, 
+        if export_path is not None and os.path.exists(export_path):
+            raise FileExistsError(f"Your model will be saved at the location {export_path}, but it already exists. Please choose a different location.")
+
+        # if the validation loss doesn't improve after 5 epochs, stop training
         early_stop = EarlyStopping(
-            monitor='val_loss',     # Monitor validation loss
-            patience=5,             # Number of epochs with no improvement after which training will be stopped
-            restore_best_weights=True # Restore weights from the epoch with the best value of the monitored quantity
+            monitor='val_loss',
+            patience=5,
+            restore_best_weights=True
         )
 
         # set up generators to use later for training and evaluation
         dm = self.dataset_manager
 
         start_time = time.time()
+        # train the model
         model_history = self.model.fit(
             dm.train_data_x,
             dm.train_data_y,
@@ -123,10 +134,11 @@ class GarbageClassificationModel:
 
     def plot_history(self, model_history):
         # plot training and validation curves (Accuracy and Loss)
-        acc = model_history.history['acc']
-        val_acc = model_history.history['val_acc']
-        loss = model_history.history['loss']
-        val_loss = model_history.history['val_loss']
+        # TensorFlow 2.x uses 'accuracy' not 'acc' - use fallbacks for compatibility
+        acc = model_history.history.get('accuracy', model_history.history.get('acc', []))
+        val_acc = model_history.history.get('val_accuracy', model_history.history.get('val_acc', []))
+        loss = model_history.history.get('loss', [])
+        val_loss = model_history.history.get('val_loss', [])
         epoch_num = range(1, len(acc) + 1)
         plt.figure(figsize = (10, 3))
         
@@ -165,20 +177,21 @@ class GarbageClassificationModel:
         '''
         dm = self.dataset_manager
         y_true = np.argmax(dm.test_data_y, axis=1)
-        x_test = dm.test_data_x / 255.0
+        # Data is already normalized in DatasetManager.load_data
+        x_test = dm.test_data_x
         prediction = self.model.predict(x_test)
         y_pred = np.argmax(prediction, axis=1)
 
         # print metrics
         print("Accuracy:", accuracy_score(y_true, y_pred))
-        print("\n Classification Report:\n", classification_report(y_true, y_pred))
-        print("\n Confusion Matrix:\n", confusion_matrix(y_true, y_pred))
+        print("\nClassification Report:\n", classification_report(y_true, y_pred))
 
         dataset_catgories = self.dataset_manager.get_categories()
-        df_cm = pd.crosstab([dataset_catgories[i] for i in y_true],
-                            [dataset_catgories[i] for i in y_pred],
-                            rownames=['label'],
-                            colnames=['predict'])
+        cm = confusion_matrix(y_true, y_pred, labels=range(len(dataset_catgories)))
+        print("\nConfusion Matrix:\n", cm)
+
+        # use dataframe to plot the confusion matrix
+        df_cm = pd.DataFrame(cm, index=dataset_catgories, columns=dataset_catgories)
         plt.figure(figsize = (6,4))
         sn.heatmap(df_cm, annot=True, cmap="Blues")
         plt.xlabel('Predicted')

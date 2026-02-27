@@ -43,7 +43,11 @@ if __name__ == "__main__":
 
     # base model architecture (not that good, ~40% accuracy)
     m = GarbageClassificationModel(dl)
-    model_history = m.train_model(epochs=25, batch_size=32, export_path="model_registry/test.keras")
+    model_history = m.train_model(
+        epochs=25,
+        batch_size=32,
+        export_path="model_registry/benchmark_model.keras"
+    )
     m.plot_history(model_history)
     m.measure_metrics()
 

@@ -1,5 +1,5 @@
 import os
-from sklearn.calibration import LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 import cv2
 from sklearn.model_selection import train_test_split
@@ -53,9 +53,11 @@ class DatasetManager:
         Returns:
             new_array: list - the standardized image as an array with dimensions img_size
         """
-        img_array = cv2.imread(img_path, cv2.IMREAD_COLOR_RGB)
+        img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        # normalize to [0, 1] for consistent training
+        img_array = img_array.astype(np.float32) / 255.0
 
-        # TODO: replace this functionality
+        # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
         img_array = cv2.resize(img_array, self.img_size)
@@ -83,12 +85,12 @@ class DatasetManager:
         
         # convert from category names -> numeric labels (integers) -> one-hot-encoding (0s and 1s)
         encoder = LabelEncoder()
-        encoder.fit(data_array_y)
-        encoded_y = encoder.transform(data_array_y)
+        encoded_y = encoder.fit_transform(data_array_y)
         one_hot_encoded_y = to_categorical(encoded_y) # convert to one-hot-encoding labels
         
         # load in the data from dataset_path
         # data_y is one-hot-encoded (0s and 1s)
+        # Images are normalized in standardize_image()
         self.data_x = data_array_x
         self.data_y = one_hot_encoded_y
     
