@@ -53,6 +53,7 @@ class DatasetManager:
         Returns:
             new_array: list - the standardized image as an array with dimensions img_size
         """
+        # Keep this
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
