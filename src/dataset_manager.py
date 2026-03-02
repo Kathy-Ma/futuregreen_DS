@@ -41,14 +41,12 @@ class DatasetManager:
         # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
         # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
 
-        path_datasets = "datasets/"
         categories = []
-        # checks each folder in datasets (TrashNet and benchmark_dataset as of currently)
-        for i in os.listdir(path_datasets):
-            # puts every category in each folder in list w/o duplicates
-            for j in os.listdir(os.path.join("datasets/", i)):
-                if j not in categories:
-                    categories.append(j)
+        # checks every category folder in dataset
+        for i in os.listdir(self.dataset_path):
+            # puts every category in list w/o duplicates
+            if i not in categories:
+                categories.append(i)
         return categories
 
     
