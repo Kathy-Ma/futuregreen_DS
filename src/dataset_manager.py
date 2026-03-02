@@ -40,7 +40,14 @@ class DatasetManager:
         """
         # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
         # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
-        return ["cardboard", "glass", "metal", "paper", "plastic", "trash", "organics", "rejected"]
+
+        categories = []
+        # checks every category folder in dataset
+        for i in os.listdir(self.dataset_path):
+            # puts every category in list w/o duplicates
+            if i not in categories:
+                categories.append(i)
+        return categories
 
     
 
