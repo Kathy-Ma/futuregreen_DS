@@ -18,19 +18,19 @@ if __name__ == "__main__":
 
     # using thebase model architecture =============================================================================
     # initialize the dataset loader and get the split datasets
-    # dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
-    # dl.load_data()
-    # dl.split_data(80, 10, 10)
+    dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
+    dl.load_data()
+    dl.split_data(80, 10, 10)
 
     # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
-    # m = GarbageClassificationModel(dl)
-    # model_history = m.train_model(
-    #     epochs=25,
-    #     batch_size=32,
-    #     export_path="model_registry/benchmark_model_2.keras"
-    # )
-    # m.plot_history(model_history)
-    # m.measure_metrics()
+    m = GarbageClassificationModel(dl)
+    model_history = m.train_model(
+        epochs=25,
+        batch_size=32,
+        export_path="model_registry/benchmark_model_2.keras"
+    )
+    m.plot_history(model_history)
+    m.measure_metrics()
 
     # using transfer learning (ResNet50 in this example) =============================================================================
     dl2 = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)

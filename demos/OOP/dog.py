@@ -70,6 +70,11 @@ class AngryDog(Dog):
     def say_hello_angrily(self):
         print("This is a new greeting only for angry dogs")
 
+    def say_hello(self):
+        print("REDEFINED")
+    
+
+
 
 ad = AngryDog("Angry", "Red")
 print("\nPRINTING ANGRY DOG")
