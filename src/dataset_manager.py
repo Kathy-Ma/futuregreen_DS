@@ -61,11 +61,6 @@ class DatasetManager:
             new_array: list - the standardized image as an array with dimensions img_size
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-
-        if img_array is None:
-            print(f"Failed to load image: {img_path}")
-            return None  # or raise an error
-    
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
         img_array = cv2.resize(img_array, self.img_size)
         # normalize to [0, 1] for consistent training
@@ -91,11 +86,11 @@ class DatasetManager:
             category_num = dataset_categories.index(category) # get unique number for each category
             for img in os.listdir(category_path):
                 img_path = os.path.join(category_path, img)
-                standardized_img_array = self.standardize_image(img_path)
-
-                if standardized_img_array is None:
-                    continue # skip this image if it failed to load
-        
+                try:
+                    standardized_img_array = self.standardize_image(img_path)
+                except:
+                    print(f"Error loading image from: {img_path}, skipping this...")
+                    continue
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
         

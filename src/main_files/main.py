@@ -13,27 +13,30 @@ from transfer_learning_models.resnet50_model import ResNet50Model
 
 
 if __name__ == "__main__":
-    DATASET_DIR = "datasets/benchmark_dataset/"
-    NORMALIZED_IMAGE_SIZE = (150, 150)
+    DATASET_DIR_1 = "datasets/benchmark_dataset/"
+    NORMALIZED_IMAGE_SIZE_1 = (150, 150)
 
     # using thebase model architecture =============================================================================
     # initialize the dataset loader and get the split datasets
-    dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
-    dl.load_data()
-    dl.split_data(80, 10, 10)
+    dl = DatasetManager(DATASET_DIR_1, NORMALIZED_IMAGE_SIZE_1)
+    # dl.load_data()
+    # dl.split_data(80, 10, 10)
 
-    # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
-    m = GarbageClassificationModel(dl)
-    model_history = m.train_model(
-        epochs=25,
-        batch_size=32,
-        export_path="model_registry/benchmark_model_2.keras"
-    )
-    m.plot_history(model_history)
-    m.measure_metrics()
+    # # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
+    # m = GarbageClassificationModel(dl)
+    # model_history = m.train_model(
+    #     epochs=25,
+    #     batch_size=32,
+    #     export_path="model_registry/benchmark_model_2.keras"
+    # )
+    # m.plot_history(model_history)
+    # m.measure_metrics()
 
     # using transfer learning (ResNet50 in this example) =============================================================================
-    dl2 = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
+    DATASET_DIR_2 = "datasets/dataset_vers1/"
+    NORMALIZED_IMAGE_SIZE_2 = (150, 150)
+    
+    dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
     dl2.load_data()
     dl2.split_data(80, 10, 10)
 
