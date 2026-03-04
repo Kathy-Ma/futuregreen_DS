@@ -62,22 +62,22 @@ d3 = Dog("Mister", "White")
 
 # AngryDog is the child class
 # Dog is the parent class
-# class AngryDog(Dog):
-#     def __init__(self, name, colour):
-#         super().__init__(name, colour)
-#         self.greeting = "I hate you"
+class AngryDog(Dog):
+    def __init__(self, name, colour):
+        super().__init__(name, colour)
+        self.greeting = "I hate you"
     
-#     def say_hello_angrily(self):
-#         print("This is a new greeting only for angry dogs")
+    def say_hello_angrily(self):
+        print("This is a new greeting only for angry dogs")
 
 
-# ad = AngryDog("Angry", "Red")
-# print("\nPRINTING ANGRY DOG")
-# print(ad.name)
-# print(ad.colour)
-# print(ad.greeting)
+ad = AngryDog("Angry", "Red")
+print("\nPRINTING ANGRY DOG")
+print(ad.name)
+print(ad.colour)
+print(ad.greeting)
 
-# ad.say_hello()
-# ad.get_info()
+ad.say_hello()
+ad.get_info()
 
-# ad.say_hello_angrily()
+ad.say_hello_angrily()

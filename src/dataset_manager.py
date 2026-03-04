@@ -61,14 +61,14 @@ class DatasetManager:
             new_array: list - the standardized image as an array with dimensions img_size
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        img_array = cv2.resize(img_array, self.img_size)
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
-        img_array = cv2.resize(img_array, self.img_size)
-        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
         return img_array
     
 
