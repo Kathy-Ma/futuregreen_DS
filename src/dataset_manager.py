@@ -59,8 +59,6 @@ class DatasetManager:
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
 
-        img_array = np.expand_dims(img_array, axis=0)
-
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
