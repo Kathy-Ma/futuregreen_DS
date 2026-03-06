@@ -51,20 +51,25 @@ class DatasetManager:
 
     
 
-    def standardize_image(self, img_path):
+    def standardize_image(self, img_path, standardization_func=None):
         """
         Given an image path, standardize the dimensions of an image to img_size
 
         Args:
             img_path: str - the path to the image to be standardized
+            standardization_func: function - the function to be used to standardize the image
+            standardization_func should take in an image array and return a standardized image array
         Returns:
             new_array: list - the standardized image as an array with dimensions img_size
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
-        img_array = cv2.resize(img_array, self.img_size)
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        img_array = cv2.resize(img_array, self.img_size)
+
+        if standardization_func is not None:
+            img_array = standardization_func(img_array)
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
