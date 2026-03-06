@@ -1,47 +1,110 @@
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-# the stuff above is for path finding to the proper imports, don't worry about it too much
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import layers, models, optimizers
+from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications.efficientnet import preprocess_input
+import pandas as pd
+import seaborn as sn
 
+DATASET_DIR = "datasets/benchmark_dataset/"
+IMAGE_SIZE = (224, 224)
+EPOCHS = 30
+BATCH_SIZE = 32
 
+images = []
+labels = []
 
+class_names = os.listdir(DATASET_DIR)
 
-from dataset_manager import DatasetManager
-from model import GarbageClassificationModel
-from transfer_learning_models.resnet50_model import ResNet50Model
+for class_name in class_names:
+    class_path = os.path.join(DATASET_DIR, class_name)
+    for img_name in tqdm(os.listdir(class_path)):
+        img_path = os.path.join(class_path, img_name)
+        image = cv2.imread(img_path)
+        if image is None:
+            continue
+        image = cv2.resize(image, IMAGE_SIZE)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        images.append(image)
+        labels.append(class_name)
 
+images = np.array(images, dtype="float32")
+images = preprocess_input(images)
+labels = np.array(labels)
 
+le = LabelEncoder()
+labels = le.fit_transform(labels)
+labels = to_categorical(labels)
 
-if __name__ == "__main__":
-    DATASET_DIR = "datasets/benchmark_dataset/"
-    NORMALIZED_IMAGE_SIZE = (150, 150)
+num_classes = len(le.classes_)
 
-    # using thebase model architecture =============================================================================
-    # initialize the dataset loader and get the split datasets
-    dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
-    dl.load_data()
-    dl.split_data(80, 10, 10)
+X_train, X_temp, y_train, y_temp = train_test_split(
+    images, labels, test_size=0.2, random_state=42
+)
 
-    # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
-    m = GarbageClassificationModel(dl)
-    model_history = m.train_model(
-        epochs=25,
-        batch_size=32,
-        export_path="model_registry/benchmark_model_2.keras"
-    )
-    m.plot_history(model_history)
-    m.measure_metrics()
+X_val, X_test, y_val, y_test = train_test_split(
+    X_temp, y_temp, test_size=0.5, random_state=42
+)
 
-    # using transfer learning (ResNet50 in this example) =============================================================================
-    dl2 = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE)
-    dl2.load_data()
-    dl2.split_data(80, 10, 10)
+base_model = EfficientNetB0(
+    weights="imagenet",
+    include_top=False,
+    input_shape=(224, 224, 3)
+)
 
-    m2 = ResNet50Model(dl2)
-    model_history = m2.train_model(
-        epochs=10,
-        batch_size=32,
-        export_path="model_registry/resnet_model.keras"
-    )
-    m2.plot_history(model_history)
-    m2.measure_metrics()
+base_model.trainable = False
+
+model = models.Sequential()
+model.add(base_model)
+model.add(layers.GlobalAveragePooling2D())
+model.add(layers.Dense(256, activation='relu'))
+model.add(layers.Dropout(0.5))
+model.add(layers.Dense(num_classes, activation='softmax'))
+
+model.compile(
+    optimizer=optimizers.Adam(learning_rate=0.001),
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=EPOCHS,
+    batch_size=BATCH_SIZE
+)
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title("Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+plt.legend(["Train", "Validation"])
+plt.show()
+
+y_pred = model.predict(X_test)
+y_pred_classes = np.argmax(y_pred, axis=1)
+y_true = np.argmax(y_test, axis=1)
+
+print("Test Accuracy:", accuracy_score(y_true, y_pred_classes))
+print("\nClassification Report:\n")
+print(classification_report(y_true, y_pred_classes, target_names=le.classes_))
+
+cm = confusion_matrix(y_true, y_pred_classes)
+df_cm = pd.DataFrame(cm, index=le.classes_, columns=le.classes_)
+
+plt.figure(figsize=(6,5))
+sn.heatmap(df_cm, annot=True, fmt="d", cmap="Blues")
+plt.xlabel("Predicted")
+plt.ylabel("True")
+plt.title("Confusion Matrix")
+plt.show()
+
+model.save("efficientnet_garbage_classifier.keras")
