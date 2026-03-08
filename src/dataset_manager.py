@@ -11,6 +11,7 @@ class DatasetManager:
     '''
     This class takes in a path to the dataset and a target image size, and outputs a standardized dataset
     '''
+
     def __init__(self, dataset_path, img_size):
         # set up properties/fields
         self.dataset_path: str = dataset_path
@@ -42,12 +43,16 @@ class DatasetManager:
         # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
 
         categories = []
-        # checks every category folder in dataset
         for i in os.listdir(self.dataset_path):
-            # puts every category in list w/o duplicates
-            if i not in categories:
+            # if the file is hidden, skip it
+            if i.startswith('.'):
+                continue
+            # else, the file is a directory, so add it to the categories list
+            path = os.path.join(self.dataset_path, i)
+            if os.path.isdir(path) and i not in categories:
+                # add the category to the categories list
                 categories.append(i)
-        return categories
+        return sorted(categories)
 
     
 
@@ -64,7 +69,7 @@ class DatasetManager:
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
         # normalize to [0, 1] for consistent training
-        img_array = img_array.astype(np.float32) / 255.0
+        # img_array = img_array.astype(np.float32) / 255.0
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
         img_array = cv2.resize(img_array, self.img_size)
 
@@ -98,9 +103,6 @@ class DatasetManager:
                     continue
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
-        
-        from collections import Counter
-        print(Counter(data_array_y))
         
         # convert from category names -> numeric labels (integers) -> one-hot-encoding (0s and 1s)
         encoder = LabelEncoder()
@@ -155,3 +157,34 @@ class DatasetManager:
         self.train_data_y = yTrain
         self.test_data_y = yTest
         self.val_data_y = yVal
+
+    
+
+    def calculate_raw_aspect_ratios(self):
+        '''
+        This function calculates the original aspect ratio of each image in the dataset
+        Args:
+            None
+        Returns:
+            None
+        '''
+        # print smallest and highest aspect ratio in each category
+        for category in self.get_categories():
+            category_path = os.path.join(self.dataset_path, category)
+            if not os.path.isdir(category_path):
+                continue
+            # only include non-hidden files
+            images = [f for f in os.listdir(category_path) if not f.startswith('.')]
+            aspect_ratios = []
+            for img_name in images:
+                img_path = os.path.join(category_path, img_name)
+                img = cv2.imread(img_path)
+                if img is not None:
+                    h, w = img.shape[:2]
+                    aspect_ratios.append((w / h, w, h, img_name))
+            if aspect_ratios:
+                min_ar = min(aspect_ratios, key=lambda x: x[0])
+                max_ar = max(aspect_ratios, key=lambda x: x[0])
+                print(f"{category}:")
+                print(f"\tmin: {min_ar[1]}x{min_ar[2]} (aspect ratio {min_ar[0]:.2f}) [file name: {min_ar[3]}]")
+                print(f"\tmax: {max_ar[1]}x{max_ar[2]} (aspect ratio {max_ar[0]:.2f}) [file name: {max_ar[3]}]")

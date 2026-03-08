@@ -1,25 +1,14 @@
 import numpy as np
-import random
-import IPython.display as display
 import matplotlib.pyplot as plt
 import os
-import cv2
-from PIL import Image
-from sklearn.preprocessing import LabelEncoder
-from tensorflow.keras.utils import to_categorical
-from tqdm import tqdm
+from tensorflow.keras.models import load_model
 import time
 
 
 from dataset_manager import DatasetManager
-import utils
-
 # ----------------------------------------------------------------
-from sklearn.model_selection import train_test_split
 
 from tensorflow.keras import layers, models, optimizers
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.preprocessing.image import img_to_array, load_img
 from tensorflow.keras.callbacks import EarlyStopping
 
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
@@ -33,7 +22,7 @@ import pandas as pd
 class GarbageClassificationModel:
     def __init__(self, dataset_manager):
         self.dataset_manager: DatasetManager = dataset_manager
-        self.learning_rate: float = 0.001  # Match main2.py for ~58% accuracy
+        self.learning_rate: float = 0.001
         
         # set up the model to start training process
         self.compile_model()
@@ -73,6 +62,18 @@ class GarbageClassificationModel:
         model.add(layers.Dense(num_categories, activation='softmax'))
 
         self.model = model
+
+
+
+    def load_model_from_file(self, model_path):
+        '''
+        This function loads a model from a file, and assigns it to the class's "model" property
+        Args:
+            model_path: the path to the model file
+        Returns:
+            None
+        '''
+        self.model = load_model(model_path)
 
 
     
@@ -183,17 +184,17 @@ class GarbageClassificationModel:
         y_pred = np.argmax(prediction, axis=1)
 
         # print metrics
-        print("Accuracy:", accuracy_score(y_true, y_pred))
-        print("\nClassification Report:\n", classification_report(y_true, y_pred))
+        print(f"Accuracy: {accuracy_score(y_true, y_pred)}")
+        print(f"\nClassification Report:\n{classification_report(y_true, y_pred, target_names=dm.get_categories())}")
 
         dataset_catgories = self.dataset_manager.get_categories()
         cm = confusion_matrix(y_true, y_pred, labels=range(len(dataset_catgories)))
-        print("\nConfusion Matrix:\n", cm)
 
         # use dataframe to plot the confusion matrix
+        print(f"\nDisplaying Confusion Matrix (see graph)\n")
         df_cm = pd.DataFrame(cm, index=dataset_catgories, columns=dataset_catgories)
-        plt.figure(figsize = (6,4))
+        plt.figure(figsize = (8,6))
         sn.heatmap(df_cm, annot=True, cmap="Blues")
-        plt.xlabel('Predicted')
-        plt.ylabel('True')
+        plt.xlabel('Predicted Labels')
+        plt.ylabel('True Labels')
         plt.show()

@@ -2,7 +2,6 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.resnet import preprocess_input
 from tensorflow.keras import layers, models, optimizers
 
-
 from model import GarbageClassificationModel
 
 class ResNet50Model(GarbageClassificationModel):
@@ -13,8 +12,8 @@ class ResNet50Model(GarbageClassificationModel):
         # include_top=False means that we don't want to include the top layer (the fully connected layer)
         # weights='imagenet' means that we want to use the ImageNet weights (we can change this to other weights)
         # input_shape is the image size that the model will take in
-        # remember that the DatasetManager has a property called img_size, which indicates the size that we transform the dataset images to!
-        # so, we will define this as the input size for our transfer learning model
+        #   remember that the DatasetManager has a property called img_size, which indicates the size that we transform the dataset images to!
+        #   so, we will define this as the input size for our transfer learning model
         pretrained_model = ResNet50(
             include_top=False,
             weights='imagenet',
@@ -22,9 +21,15 @@ class ResNet50Model(GarbageClassificationModel):
         )
         pretrained_model.trainable = False
 
+
+
+        # define and construct the model architecture
+
         model = models.Sequential()
-        # ResNet expects [0,255] + ImageNet preprocessing; data is [0,1] from DatasetManager
-        model.add(layers.Lambda(lambda x: preprocess_input(x * 255.0), input_shape=(dm.img_size[0], dm.img_size[1], 3)))
+
+        # # ResNet expects [0,255] + ImageNet preprocessing
+        # so, make sure that the DatasetManager does not divide pixel values by 255
+
         # we add ResNet50 to the model architecture
         model.add(pretrained_model)
 
