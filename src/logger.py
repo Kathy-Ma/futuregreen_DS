@@ -2,6 +2,20 @@ from datetime import datetime
 import os
 import matplotlib.pyplot as plt
 
+
+class NullLogger:
+    """No-op logger - same interface as Logger but does nothing. Use when logging is disabled."""
+
+    def log_message(self, message):
+        print(message)
+
+    def save_figure(self, filename):
+        plt.show()  # display instead of saving when no logger
+
+    def save_image(self, image, image_name):
+        pass
+
+
 class Logger:
     def __init__(self, logging_folder_name):
         self.logging_source_path = "logs/"
