@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from dataset_manager import DatasetManager
 from model import GarbageClassificationModel
 from transfer_learning_models.resnet50_model import ResNet50Model
+from logger import Logger
 
 
 
@@ -35,25 +36,41 @@ if __name__ == "__main__":
     # m.measure_metrics()
 
     # using transfer learning (ResNet50 in this example) =============================================================================
-    DATASET_DIR_2 = "datasets/dataset_vers1/"
-    NORMALIZED_IMAGE_SIZE_2 = (150, 150)
+    # DATASET_DIR_2 = "datasets/dataset_vers1/"
+    # NORMALIZED_IMAGE_SIZE_2 = (150, 150)
 
-    MODEL_PATH_1 = "model_registry/resnet_model.keras"
+    # MODEL_PATH_1 = "model_registry/resnet_model.keras"
     
-    dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
-    dl2.load_data()
-    dl2.split_data(60, 20, 20)
+    # dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
+    # dl2.load_data()
+    # dl2.split_data(60, 20, 20)
 
-    m2 = ResNet50Model(dl2)
-    model_history = m2.train_model(
-        epochs=10,
+    # m2 = ResNet50Model(dl2)
+    # model_history = m2.train_model(
+    #     epochs=10,
+    #     batch_size=32,
+    #     export_path=MODEL_PATH_1
+    # )
+    # m2.plot_history(model_history)
+    # m2.measure_metrics()
+
+    # # reload the model
+    # m22 = GarbageClassificationModel(dl2)
+    # m22.load_model_from_file(MODEL_PATH_1)
+    # m22.measure_metrics()
+
+    DATASET_DIR = "datasets/dataset_vers1/"
+    NORMALIZED_IMAGE_SIZE = (150, 150)
+
+    logger = Logger("resnet50_model")
+    dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE, logger=logger)
+    dl.load_data()
+    dl.split_data(60, 20, 20)
+    m = ResNet50Model(dl, logger=logger)
+    model_history = m.train_model(
+        epochs=1,
         batch_size=32,
-        export_path=MODEL_PATH_1
+        export_path="model_registry/resnet50_model.keras"
     )
-    m2.plot_history(model_history)
-    m2.measure_metrics()
-
-    # reload the model
-    m22 = GarbageClassificationModel(dl2)
-    m22.load_model_from_file(MODEL_PATH_1)
-    m22.measure_metrics()
+    m.plot_history(model_history)
+    m.measure_metrics()

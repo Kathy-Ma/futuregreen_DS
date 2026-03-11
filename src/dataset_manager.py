@@ -5,14 +5,15 @@ import cv2
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
 import numpy as np
-
+from collections import Counter
+from pathlib import Path
 
 class DatasetManager:
     '''
     This class takes in a path to the dataset and a target image size, and outputs a standardized dataset
     '''
 
-    def __init__(self, dataset_path, img_size):
+    def __init__(self, dataset_path, img_size, logger=None):
         # set up properties/fields
         self.dataset_path: str = dataset_path
         self.img_size: tuple[int, int] = img_size
@@ -23,6 +24,16 @@ class DatasetManager:
         # same thing for the train/test/val datasets
         self.train_data_x, self.test_data_x, self.val_data_x = [], [], []
         self.train_data_y, self.test_data_y, self.val_data_y = [], [], []
+
+        self.logger = logger
+
+        if self.has_logger():
+            self.logger.log_message(f"Dataset is set to {Path(self.dataset_path).name}")
+            self.logger.log_message(f"Dimensions of the dataset images will be {self.img_size}")
+    
+
+    def has_logger(self):
+        return self.logger is not None
     
 
     def update_dataset_path(self, new_dataset_path):
@@ -32,6 +43,9 @@ class DatasetManager:
         Alternatively, you can just initialize a new dataset manager for each dataset
         """
         self.dataset_path = new_dataset_path
+
+        if self.has_logger():
+            self.logger.log_message(f"Dataset has been updated to {Path(self.dataset_path).name}")
 
     
 
@@ -53,8 +67,6 @@ class DatasetManager:
         """
         Returns an array of category names based on the folder names in the dataset_path
         """
-        # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
-        # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
 
         categories = []
         for i in os.listdir(self.dataset_path):
@@ -129,8 +141,15 @@ class DatasetManager:
         self.data_x = np.asarray(data_array_x)
         self.data_y = np.asarray(one_hot_encoded_y)
 
-        from collections import Counter
-        print(Counter(data_array_y))
+        # log any important information (i.e. amount of training data for each category)
+        if self.has_logger():
+            self.logger.log_message(f"\nLoaded {len(self.data_x)} images from {Path(self.dataset_path).name}")
+            counts = Counter(data_array_y)
+            parts = []
+            for i in range(len(dataset_categories)):
+                parts.append(f"\t{self.get_category_name_from_index(i)}: {counts.get(i)} images")
+            dist_str = "\n".join(parts)
+            self.logger.log_message(f"Number of images per category:\n{dist_str}")
     
 
 
@@ -174,6 +193,24 @@ class DatasetManager:
         self.train_data_y = yTrain
         self.test_data_y = yTest
         self.val_data_y = yVal
+
+        if self.has_logger():
+            self.logger.log_message(f"\nData is split with train/test/validation ratio of {train_ratio}/{test_ratio}/{val_ratio}")
+            self.logger.log_message(f"\tTraining data: {len(self.train_data_x)} images")
+            self.logger.log_message(f"\tTesting data: {len(self.test_data_x)} images")
+            self.logger.log_message(f"\tValidation data: {len(self.val_data_x)} images")
+            
+            split_names = ["Training", "Testing", "Validation"]
+            for split_name, data_y in zip(split_names, [self.train_data_y, self.test_data_y, self.val_data_y]):
+                if len(data_y) == 0:
+                    continue
+                indices = np.argmax(data_y, axis=1)
+                counts = Counter(indices)
+                parts = []
+                for i in range(len(self.get_categories())):
+                    parts.append(f"\t{self.get_category_name_from_index(i)}: {counts.get(i)} images")
+                dist_str = "\n".join(parts)
+                self.logger.log_message(f"{split_name} - images per category:\n{dist_str}")
 
     
 

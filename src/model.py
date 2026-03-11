@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from tensorflow.keras.models import load_model
 import time
-
+from pathlib import Path
 
 from dataset_manager import DatasetManager
 # ----------------------------------------------------------------
@@ -20,12 +20,21 @@ import pandas as pd
 
 
 class GarbageClassificationModel:
-    def __init__(self, dataset_manager):
+    def __init__(self, dataset_manager, logger=None):
         self.dataset_manager: DatasetManager = dataset_manager
         self.learning_rate: float = 0.001
         
         # set up the model to start training process
         self.compile_model()
+
+        self.logger = logger
+
+        if self.has_logger():
+            self.logger.log_message(f"\nThe model's name is {self.__class__.__name__}")
+    
+
+    def has_logger(self):
+        return self.logger is not None
     
 
     def create_model(self):
@@ -75,6 +84,9 @@ class GarbageClassificationModel:
         '''
         self.model = load_model(model_path)
 
+        if self.has_logger():
+            self.logger.log_message(f"\nModel is loaded from {Path(model_path).name}")
+
 
     
     def compile_model(self):
@@ -100,6 +112,9 @@ class GarbageClassificationModel:
     def train_model(self, epochs=50, batch_size=32, export_path=None):
         # if the file already exists, 
         if export_path is not None and os.path.exists(export_path):
+            if self.has_logger():
+                self.logger.log_message(f"The model could not be trained...")
+                self.logger.log_message(f"The model will be saved at {export_path} but this file path already exists, so try again with a different location.")
             raise FileExistsError(f"Your model will be saved at the location {export_path}, but it already exists. Please choose a different location.")
 
         # if the validation loss doesn't improve after 5 epochs, stop training
@@ -125,9 +140,18 @@ class GarbageClassificationModel:
         end_time = time.time()
         print(f'Training time: {end_time - start_time:.2f} seconds')
         print(f'Training time: {(end_time - start_time)/60:.2f} mins')
+        
+        if self.has_logger():
+            self.logger.log_message(f"\nModel is trained for {epochs} epochs")
+            total_seconds = end_time - start_time
+            minutes, seconds = divmod(int(total_seconds), 60)
+            self.logger.log_message(f"\tTraining time: {minutes}min {seconds}sec")
 
         if export_path is not None:
             self.model.save(export_path)
+
+            if self.has_logger():
+                self.logger.log_message(f"\nModel is saved at {Path(export_path).name}")
 
         return model_history
     
@@ -158,7 +182,10 @@ class GarbageClassificationModel:
         plt.title('Training and Validation loss')
         plt.legend()
 
-        plt.show()
+        if self.has_logger():
+            self.logger.save_figure("training_and_validation_history.png")
+        else:
+            plt.show()
     
 
 
@@ -183,18 +210,26 @@ class GarbageClassificationModel:
         prediction = self.model.predict(x_test)
         y_pred = np.argmax(prediction, axis=1)
 
-        # print metrics
+        # print metrics (or log if possible)
+        if self.has_logger():
+            self.logger.log_message(f"\tAccuracy: {accuracy_score(y_true, y_pred)}")
+            self.logger.log_message(f"\nClassification Report:\n{classification_report(y_true, y_pred, target_names=dm.get_categories())}")
         print(f"Accuracy: {accuracy_score(y_true, y_pred)}")
         print(f"\nClassification Report:\n{classification_report(y_true, y_pred, target_names=dm.get_categories())}")
+
 
         dataset_catgories = self.dataset_manager.get_categories()
         cm = confusion_matrix(y_true, y_pred, labels=range(len(dataset_catgories)))
 
         # use dataframe to plot the confusion matrix
-        print(f"\nDisplaying Confusion Matrix (see graph)\n")
         df_cm = pd.DataFrame(cm, index=dataset_catgories, columns=dataset_catgories)
-        plt.figure(figsize = (8,6))
+        plt.figure(figsize=(8, 6))
         sn.heatmap(df_cm, annot=True, cmap="Blues")
         plt.xlabel('Predicted Labels')
         plt.ylabel('True Labels')
-        plt.show()
+
+        if self.has_logger():
+            self.logger.save_figure("confusion_matrix.png")
+        else:
+            print(f"\nDisplaying Confusion Matrix (see graph)\n")
+            plt.show()

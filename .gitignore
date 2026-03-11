@@ -7,3 +7,5 @@ Thumbs.db
 
 # upload the datasets to this directory yourself, as we don't want to push 2GB datasets to the repo
 datasets/
+
+logs/
