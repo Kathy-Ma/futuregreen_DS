@@ -35,6 +35,20 @@ class DatasetManager:
 
     
 
+    def get_category_name_from_index(self, index):
+        """
+        Returns the name of the category at the given index
+        Since one hot encoding is used, model predictions use the index of the category instead of the category name itself
+        This function returns the category name for easier interpretability
+        Args:
+            index: the index of the category
+        Returns:
+            category_name: the name of the category
+        """
+        return self.get_categories()[index]
+
+
+
     def get_categories(self):
         """
         Returns an array of category names based on the folder names in the dataset_path
@@ -52,7 +66,7 @@ class DatasetManager:
             if os.path.isdir(path) and i not in categories:
                 # add the category to the categories list
                 categories.append(i)
-        return sorted(categories)
+        return categories
 
     
 
@@ -114,6 +128,9 @@ class DatasetManager:
         # Images are normalized in standardize_image()
         self.data_x = np.asarray(data_array_x)
         self.data_y = np.asarray(one_hot_encoded_y)
+
+        from collections import Counter
+        print(Counter(data_array_y))
     
 
 

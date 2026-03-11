@@ -18,13 +18,13 @@ if __name__ == "__main__":
     # DATASET_DIR_1 = "datasets/benchmark_dataset/"
     # NORMALIZED_IMAGE_SIZE_1 = (150, 150)
 
-    # using thebase model architecture =============================================================================
+    # using the base model architecture =============================================================================
     # initialize the dataset loader and get the split datasets
     # dl = DatasetManager(DATASET_DIR_1, NORMALIZED_IMAGE_SIZE_1)
     # dl.load_data()
-    # dl.split_data(80, 10, 10)
+    # dl.split_data(60, 20, 20)
 
-    # # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
+    # # the base model (not good but also not bad, ~60% accuracy at 25 epochs)
     # m = GarbageClassificationModel(dl)
     # model_history = m.train_model(
     #     epochs=25,
@@ -37,6 +37,8 @@ if __name__ == "__main__":
     # using transfer learning (ResNet50 in this example) =============================================================================
     DATASET_DIR_2 = "datasets/dataset_vers1/"
     NORMALIZED_IMAGE_SIZE_2 = (150, 150)
+
+    MODEL_PATH_1 = "model_registry/resnet_model.keras"
     
     dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
     dl2.load_data()
@@ -46,14 +48,12 @@ if __name__ == "__main__":
     model_history = m2.train_model(
         epochs=10,
         batch_size=32,
-        export_path="model_registry/resnet_model.keras"
+        export_path=MODEL_PATH_1
     )
     m2.plot_history(model_history)
     m2.measure_metrics()
 
-    # dl22 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
-    # dl22.load_data()
-    # dl22.split_data(60, 20, 20)
-    # m22 = GarbageClassificationModel(dl22)
-    # m22.load_model_from_file("model_registry/resnet_model.keras")
-    # m22.measure_metrics()
+    # reload the model
+    m22 = GarbageClassificationModel(dl2)
+    m22.load_model_from_file(MODEL_PATH_1)
+    m22.measure_metrics()
