@@ -77,6 +77,9 @@ class DatasetManager:
         #right_pad = 50
         #left_pad = 50
 
+
+        
+
         #border_color = [255, 255, 255]
         #img_array = cv2.copyMakeBorder(img_array, top_pad, bottom_pad, left_pad, right_pad, cv2.BORDER_CONSTANT)
         img_array = cv2.resize(img_array, self.img_size)
