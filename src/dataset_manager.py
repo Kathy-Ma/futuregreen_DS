@@ -39,7 +39,7 @@ class DatasetManager:
         Returns an array of category names based on the folder names in the dataset_path
         """
         # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
-        # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
+        # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.) （Done）
 
         categories = []
         # checks every category folder in dataset
@@ -62,6 +62,23 @@ class DatasetManager:
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        
+        # Resize to target size first to handle images of any input size consistently (dont think this worked)
+        #img_array = cv2.resize(img_array, self.img_size, interpolation=cv2.INTER_AREA)
+
+        #y_start = (img_array.shape[0] - self.img_size[0]) // 2
+        #x_start = (img_array.shape[1] - self.img_size[1]) // 2
+        #img_array = img_array[y_start:y_start+self.img_size[0], x_start:x_start+self.img_size[1]]
+
+    
+        #padding
+        #top_pad = 50
+        #bottom_pad = 50
+        #right_pad = 50
+        #left_pad = 50
+
+        #border_color = [255, 255, 255]
+        #img_array = cv2.copyMakeBorder(img_array, top_pad, bottom_pad, left_pad, right_pad, cv2.BORDER_CONSTANT)
         img_array = cv2.resize(img_array, self.img_size)
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
@@ -78,7 +95,7 @@ class DatasetManager:
         Given the dataset_path, standardize the images and load them with their labels into two arrays (data_x and data_y)
         """
 
-        # TODO: split the data evenly between each category
+        # TODO: split the data evenly between each category （ratios for trvariables below, use disctionaries? for train test spllit) 
         data_array_x, data_array_y = [], []
         dataset_categories = self.get_categories()
         for category in tqdm(dataset_categories):
