@@ -64,15 +64,17 @@ if __name__ == "__main__":
 
     logger = Logger("resnet50_model")
     dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE, logger=logger)
-    # dl.load_data()
-    # dl.split_data(60, 20, 20)
+    dl.load_data()
+    dl.split_data(60, 20, 20)
     m = ResNet50Model(dl, logger=logger)
     m.load_model_from_file("model_registry/resnet50_model.keras")
     # model_history = m.train_model(
-    #     epochs=1,
+    #     epochs=10,
     #     batch_size=32,
     #     export_path="model_registry/resnet50_model.keras"
     # )
     # m.plot_history(model_history)
-    # m.measure_metrics()
-    m.predict_img("datasets/dataset_vers1/paper/paper_1.jpg")
+    m.measure_metrics()
+    m.predict_img("datasets/benchmark_dataset/organics/organics_1.jpg")
+    m.random_preds(3, 6)
+    m.random_preds(8, 4)

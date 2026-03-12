@@ -1,0 +1,2 @@
+Dataset is set to dataset_vers1
+Dimensions of the dataset images will be (150, 150)

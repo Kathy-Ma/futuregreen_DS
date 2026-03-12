@@ -23,10 +23,13 @@ class DatasetManager:
         # data_x and data_y are arrays of images and their corresponding labels: {category_name: [images]}, labels_by_category: {category_name: [one-hot labels]}
         self.data_x = {}
         self.data_y = {}
+        # data_paths is a dictionary of image paths that correspond to data_x and data_y
+        self.img_paths = {}
 
         # same thing for the train/test/val datasets
         self.train_data_x, self.test_data_x, self.val_data_x = [], [], []
         self.train_data_y, self.test_data_y, self.val_data_y = [], [], []
+        self.test_img_paths = []  # full paths for test images (will use later to fetch image names)
 
         self.logger = logger or NullLogger()
         self.logger.log_message(f"Dataset is set to {Path(self.dataset_path).name}")
@@ -91,10 +94,12 @@ class DatasetManager:
         # normalize to [0, 1] for consistent training
         # img_array = img_array.astype(np.float32) / 255.0
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
-        img_array = cv2.resize(img_array, self.img_size)
 
         if standardization_func is not None:
             img_array = standardization_func(img_array)
+        else:
+            img_array = cv2.resize(img_array, self.img_size)
+
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
@@ -110,13 +115,13 @@ class DatasetManager:
         dataset_categories = self.get_categories()
 
         # reset the data
-        self.data_x, self.data_y = {}, {}
+        self.data_x, self.data_y, self.img_paths = {}, {}, {}
         encoder = LabelEncoder()
         encoder.fit(range(len(dataset_categories)))
         for category in tqdm(dataset_categories):
             category_path = os.path.join(self.dataset_path, category)
             category_num = dataset_categories.index(category) # get a unique number for each category
-            data_array_x, data_array_y = [], []
+            data_array_x, data_array_y, img_path_array = [], [], []
             for img in os.listdir(category_path):
                 img_path = os.path.join(category_path, img)
                 try:
@@ -126,10 +131,12 @@ class DatasetManager:
                     continue
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
+                img_path_array.append(img_path)
             self.data_x[category] = np.asarray(data_array_x)
             encoded_array_y = encoder.transform(data_array_y)
             one_hot_encoded_array_y = to_categorical(encoded_array_y, num_classes=len(dataset_categories))
             self.data_y[category] = one_hot_encoded_array_y
+            self.img_paths[category] = img_path_array
 
         total_images = sum(len(imgs) for imgs in self.data_x.values())
         self.logger.log_message(f"\nLoaded {total_images} images from {Path(self.dataset_path).name}")
@@ -156,40 +163,45 @@ class DatasetManager:
 
         # reset arrays
         xTrain, xTest, xVal, yTrain, yTest, yVal = [], [], [], [], [], []
+        test_img_path_array = []
         for category in self.get_categories():
             category_data_x = self.data_x.get(category, np.array([]))
             category_data_y = self.data_y.get(category, np.array([]))
+            category_img_paths = self.img_paths.get(category, np.array([]))
             if len(category_data_x) == 0:
                 continue
-
-            xTrain_cat, xTest_cat, yTrain_cat, yTest_cat = train_test_split(
-                category_data_x, category_data_y,
+            
+            # instead of splitting by data, we split by indices and filter afterwards
+            indices = np.arange(len(category_data_x))
+            indices_train, indices_test = train_test_split(
+                indices,
                 test_size=(test_ratio + val_ratio) / 100,
                 shuffle=True,
                 random_state=state_num
             )
+            indices_test, indices_val = (train_test_split(
+                indices_test,
+                test_size=val_ratio / (test_ratio + val_ratio),
+                shuffle=True,
+                random_state=state_num
+            ) if val_ratio != 0 else (indices_test, np.array([], dtype=int)))
 
-            if val_ratio != 0: # val_ratio = 0 means that no validation set needed
-                xTest_cat, xVal_cat, yTest_cat, yVal_cat = train_test_split(
-                    xTest_cat, yTest_cat,
-                    test_size=val_ratio / (test_ratio + val_ratio),
-                    shuffle=True,
-                    random_state=state_num
-                )
-                xVal.append(xVal_cat)
-                yVal.append(yVal_cat)
-
-            xTrain.append(xTrain_cat)
-            xTest.append(xTest_cat)
-            yTrain.append(yTrain_cat)
-            yTest.append(yTest_cat)
+            xTrain.append(category_data_x[indices_train])
+            xTest.append(category_data_x[indices_test])
+            yTrain.append(category_data_y[indices_train])
+            yTest.append(category_data_y[indices_test])
+            if val_ratio != 0:
+                xVal.append(category_data_x[indices_val])
+                yVal.append(category_data_y[indices_val])
+            test_img_path_array.extend([category_img_paths[i] for i in indices_test])
 
         self.train_data_x = np.concatenate(xTrain)
         self.test_data_x = np.concatenate(xTest)
         self.train_data_y = np.concatenate(yTrain)
         self.test_data_y = np.concatenate(yTest)
-        self.val_data_x = np.concatenate(xVal)
-        self.val_data_y = np.concatenate(yVal)
+        self.val_data_x = np.concatenate(xVal) if val_ratio != 0 and xVal else np.array([])
+        self.val_data_y = np.concatenate(yVal) if val_ratio != 0 and yVal else np.array([])
+        self.test_data_paths = test_img_path_array
 
         # log any important information
         self.logger.log_message(f"\nData is split with train/test/validation ratio of {train_ratio}/{test_ratio}/{val_ratio}")

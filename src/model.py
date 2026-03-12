@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import cv2
+import random
 from tensorflow.keras.models import load_model
 import time
 from pathlib import Path
@@ -131,8 +133,6 @@ class GarbageClassificationModel:
             callbacks=[early_stop]
         )
         end_time = time.time()
-        print(f'Training time: {end_time - start_time:.2f} seconds')
-        print(f'Training time: {(end_time - start_time)/60:.2f} mins')
         
         self.logger.log_message(f"\nModel is trained for {epochs} epochs")
         total_seconds = end_time - start_time
@@ -199,12 +199,13 @@ class GarbageClassificationModel:
         y_pred = np.argmax(prediction, axis=1)
         end_time = time.time() - start_time
 
+
         # log metrics about the predictions
         self.logger.log_message(f"\nPrediction summary:")
         self.logger.log_message(f"\tTotal images predicted: {len(x_test)}")
         self.logger.log_message(f"\tCorrect: {np.sum(y_true == y_pred)}")
         self.logger.log_message(f"\tWrong: {np.sum(y_true != y_pred)}")
-        self.logger.log_message(f"\tTime: {end_time:.2f}s ({end_time/len(x_test):.2f}s per image)")
+        self.logger.log_message(f"\tTime: {end_time:.2f}s ({end_time/len(x_test):.4f}s per image)")
 
         # print metrics (or log if possible)
         self.logger.log_message(f"\tAccuracy: {accuracy_score(y_true, y_pred)}")
@@ -224,8 +225,19 @@ class GarbageClassificationModel:
         plt.ylabel('True Labels')
 
         self.logger.save_figure("confusion_matrix.png")
-    
 
+
+
+    def _predict_batch(self, images):
+        """Predict on images. Returns (predictions array, list of predicted category names)."""
+        predictions = self.model.predict(images, verbose=0)
+        pred_indices = np.argmax(predictions, axis=1)
+        pred_labels = [self.dataset_manager.get_category_name_from_index(i) for i in pred_indices]
+        return predictions, pred_labels
+
+    def _get_text_colour(self, pred_label, true_label):
+        color = 'green' if pred_label == true_label else 'red'
+        return color
 
     def predict_img(self, img_path):
         '''
@@ -235,14 +247,104 @@ class GarbageClassificationModel:
         Returns:
             None
         '''
+        # first, try to load the raw image (pre-processed)
+        raw_img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        if raw_img is None:
+            print(f"Error: could not load image at {img_path}")
+            return
+            # convert to RGB
+        raw_img = cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)
+        # the true label comes from the parent folder
+        true_label = Path(img_path).parent.name
 
+        # next, try to standardize the image (post-processed)
         try:
             standardized_img = self.dataset_manager.standardize_image(img_path)
         except Exception as e:
             print(f"Error: we could not standardize the image at {img_path}")
             print(f"Error: {e}")
-            return None
+            return
+        # add extra dimension to the image for prediction (doesn't work otherwise)
+        batch_img = np.expand_dims(standardized_img, axis=0)
+
+
+        # do the actual prediction
+        prediction = self.model.predict(batch_img)
+        predicted_index = np.argmax(prediction, axis=1)[0]
+        pred_label = self.dataset_manager.get_category_name_from_index(predicted_index)
+        categories = self.dataset_manager.get_categories()
+        probabilities = prediction[0]
+        result = {cat: float(probabilities[i]) for i, cat in enumerate(categories)}
+
+        text_colour = self._get_text_colour(pred_label, true_label)
+        fig, axes = plt.subplots(1, 2, figsize=(10, 8))
+        # display the raw image
+        axes[0].imshow(raw_img)
+        axes[0].set_title(f'Raw Image: ({raw_img.shape[0]} x {raw_img.shape[1]})')
+        axes[0].axis('off')
+        # display the standardized image
+        axes[1].imshow(standardized_img)
+        axes[1].set_title(f'Standardized Image ({standardized_img.shape[0]} x {standardized_img.shape[1]})')
+        axes[1].axis('off')
+
+        fig.suptitle(f"Image: {Path(img_path).name}", fontsize=12)
+        fig.text(0.5, 0.10, f"True Label: {true_label}", ha='center', fontsize=10, color='black')
+        fig.text(0.5, 0.06, f"Predicted Label: {pred_label}", ha='center', fontsize=10, color=text_colour)
+
+        pred_str = ", ".join(f"{cat}: {p:.1%}" for cat, p in sorted(result.items(), key=lambda x: -x[1]))
+        fig.text(0.5, 0.02, f"Predictions: {pred_str}", ha='center', fontsize=9)
+        plt.tight_layout(rect=[0, 0.2, 1, 0.95])
         
-        prediction = self.model.predict(standardized_img)
-        print(prediction)
-        
+        self.logger.save_figure(f"pred_{Path(img_path).name}")
+
+
+    def random_preds(self, rows=2, columns=5):
+        """
+        Display predictions on random test images. Green title = correct, red = incorrect.
+        """
+        dm = self.dataset_manager
+        x_test = dm.test_data_x
+        y_test = dm.test_data_y
+
+        if len(x_test) == 0:
+            print("No test data available.")
+            return
+
+        num_samples = min(rows * columns, len(x_test))
+        random_indices = random.sample(range(len(x_test)), num_samples)
+
+        sample_images = x_test[random_indices]
+        sample_true_labels = np.argmax(y_test[random_indices], axis=1)
+        sample_paths = [dm.test_data_paths[j] for j in random_indices] if getattr(dm, 'test_data_paths', None) else None
+        predictions, pred_labels = self._predict_batch(sample_images)
+
+        fig, axes = plt.subplots(rows, columns, figsize=(4 * columns, 4 * rows))
+        if rows == 1 and columns == 1:
+            axes = np.array([[axes]])
+        elif rows == 1:
+            axes = axes.reshape(1, -1)
+        elif columns == 1:
+            axes = axes.reshape(-1, 1)
+
+        for i in range(num_samples):
+            row, col = i // columns, i % columns
+            ax = axes[row, col]
+            true_cat = dm.get_category_name_from_index(sample_true_labels[i])
+            color = self._get_text_colour(pred_labels[i], true_cat)
+            top2_idx = np.argsort(predictions[i])[-2:][::-1]
+            top2_str = ", ".join(f"{dm.get_category_name_from_index(j)}: {predictions[i][j]:.0%}" for j in top2_idx)
+            img_name = Path(sample_paths[i]).name if sample_paths else f"Image {i}"
+            ax.set_title(
+                f"{img_name}\nPred: {pred_labels[i]} | True: {true_cat}\n{top2_str}",
+                color=color,
+                fontsize=10
+            )
+            ax.imshow(sample_images[i])
+            ax.axis('off')
+
+        for i in range(num_samples, rows * columns):
+            axes.flat[i].axis('off')
+
+        fig.suptitle("Predictions on Random Test Images", fontsize=14)
+        plt.tight_layout()
+        self.logger.save_figure(f"random_preds_{rows}x{columns}.png")
