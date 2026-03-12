@@ -192,10 +192,19 @@ class GarbageClassificationModel:
         '''
         dm = self.dataset_manager
         y_true = np.argmax(dm.test_data_y, axis=1)
-        # Data is already normalized in DatasetManager.load_data
         x_test = dm.test_data_x
+
+        start_time = time.time()
         prediction = self.model.predict(x_test)
         y_pred = np.argmax(prediction, axis=1)
+        end_time = time.time() - start_time
+
+        # log metrics about the predictions
+        self.logger.log_message(f"\nPrediction summary:")
+        self.logger.log_message(f"\tTotal images predicted: {len(x_test)}")
+        self.logger.log_message(f"\tCorrect: {np.sum(y_true == y_pred)}")
+        self.logger.log_message(f"\tWrong: {np.sum(y_true != y_pred)}")
+        self.logger.log_message(f"\tTime: {end_time:.2f}s ({end_time/len(x_test):.2f}s per image)")
 
         # print metrics (or log if possible)
         self.logger.log_message(f"\tAccuracy: {accuracy_score(y_true, y_pred)}")
@@ -215,3 +224,25 @@ class GarbageClassificationModel:
         plt.ylabel('True Labels')
 
         self.logger.save_figure("confusion_matrix.png")
+    
+
+
+    def predict_img(self, img_path):
+        '''
+        This function predicts the class of an image
+        Args:
+            img_path: the path to the image
+        Returns:
+            None
+        '''
+
+        try:
+            standardized_img = self.dataset_manager.standardize_image(img_path)
+        except Exception as e:
+            print(f"Error: we could not standardize the image at {img_path}")
+            print(f"Error: {e}")
+            return None
+        
+        prediction = self.model.predict(standardized_img)
+        print(prediction)
+        

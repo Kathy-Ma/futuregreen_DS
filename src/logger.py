@@ -26,7 +26,7 @@ class Logger:
         self.logging_folder_path = os.path.join(self.logging_source_path, logging_folder_name_timestamped)
 
         os.makedirs(self.logging_folder_path)
-        print(self.logging_folder_path)
+        print(f"We will be logging relevant information to the {self.logging_folder_path} folder")
 
         self.logging_file_path = os.path.join(self.logging_folder_path, "log.txt")
         open(self.logging_file_path, "a").close()  # create file if it doesn't exist
