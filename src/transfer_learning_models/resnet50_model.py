@@ -1,6 +1,5 @@
 from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.applications.resnet import preprocess_input
-from tensorflow.keras import layers, models, optimizers
+from tensorflow.keras import layers, models
 
 from model import GarbageClassificationModel
 

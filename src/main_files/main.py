@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from dataset_manager import DatasetManager
 from model import GarbageClassificationModel
 from transfer_learning_models.resnet50_model import ResNet50Model
-from transfer_learning_models.mnasnet_model import MNASNetModel
+from transfer_learning_models.nasnetmobile_model import NASNetMobileModel
 
 
 
@@ -36,23 +36,12 @@ if __name__ == "__main__":
     # m.measure_metrics()
 
     # using transfer learning (ResNet50 in this example) =============================================================================
-<<<<<<< Updated upstream
-    DATASET_DIR_2 = "datasets/dataset_vers1/"
-    NORMALIZED_IMAGE_SIZE_2 = (150, 150)
-
-    MODEL_PATH_1 = "model_registry/resnet_model.keras"
-    
-    dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
-    dl2.load_data()
-    dl2.split_data(60, 20, 20)
-=======
     #DATASET_DIR_2 = "datasets/benchmark_dataset/"
     #NORMALIZED_IMAGE_SIZE_2 = (150, 150)
     
     #dl2 = DatasetManager(DATASET_DIR_2, NORMALIZED_IMAGE_SIZE_2)
     #dl2.load_data()
     #dl2.split_data(80, 10, 10)
->>>>>>> Stashed changes
 
     #m2 = ResNet50Model(dl2)
     #model_history = m2.train_model(
@@ -64,36 +53,23 @@ if __name__ == "__main__":
     #m2.measure_metrics()
 
     # using transfer learning (MNASNet in this example) =============================================================================
-    print("\n\n" + "="*80)
-    print("TRAINING MNASNet MODEL")
-    print("="*80 + "\n")
     
-    DATASET_DIR_3 = "datasets/"
+    DATASET_DIR_3 = "datasets/dataset_vers1/"
     NORMALIZED_IMAGE_SIZE_3 = (150, 150)
     
     dl3 = DatasetManager(DATASET_DIR_3, NORMALIZED_IMAGE_SIZE_3)
     dl3.load_data()
-    dl3.split_data(80, 10, 10)
+    dl3.split_data(60, 20, 20)
 
-    m3 = MNASNetModel(dl3)
+    m3 = NASNetMobileModel(dl3)
     model_history = m3.train_model(
         epochs=10,
         batch_size=32,
-<<<<<<< Updated upstream
-        export_path=MODEL_PATH_1
-=======
         export_path="model_registry/mnasnet_model.keras"
->>>>>>> Stashed changes
     )
     m3.plot_history(model_history)
     m3.measure_metrics()
 
-<<<<<<< Updated upstream
-    # reload the model
-    m22 = GarbageClassificationModel(dl2)
-    m22.load_model_from_file(MODEL_PATH_1)
-    m22.measure_metrics()
-=======
 
     
     # print smallest and highest aspect ratio in each category
@@ -132,4 +108,3 @@ if __name__ == "__main__":
     # plt.axis("off")
     # plt.title("Image")
     # plt.show()
->>>>>>> Stashed changes
