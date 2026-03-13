@@ -92,7 +92,7 @@ class DatasetManager:
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
         # normalize to [0, 1] for consistent training
-        # img_array = img_array.astype(np.float32) / 255.0
+        img_array = img_array.astype(np.float32) / 255.0
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
 
         if standardization_func is not None:

@@ -16,8 +16,8 @@ from logger import Logger
 
 
 if __name__ == "__main__":
-    # DATASET_DIR_1 = "datasets/benchmark_dataset/"
-    # NORMALIZED_IMAGE_SIZE_1 = (150, 150)
+    DATASET_DIR_1 = "datasets/benchmark_dataset/"
+    NORMALIZED_IMAGE_SIZE_1 = (150, 150)
 
     # using the base model architecture =============================================================================
     # initialize the dataset loader and get the split datasets
