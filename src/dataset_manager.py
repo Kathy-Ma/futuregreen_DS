@@ -5,6 +5,9 @@ import cv2
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
 import numpy as np
+from collections import Counter
+from pathlib import Path
+from logger import NullLogger
 
 
 class DatasetManager:
@@ -12,18 +15,25 @@ class DatasetManager:
     This class takes in a path to the dataset and a target image size, and outputs a standardized dataset
     '''
 
-    def __init__(self, dataset_path, img_size):
+    def __init__(self, dataset_path, img_size, logger=None):
         # set up properties/fields
         self.dataset_path: str = dataset_path
         self.img_size: tuple[int, int] = img_size
 
-        # stores the image data and their corresponding labels (initialized as empty lists)
-        self.data_x, self.data_y = [], []
+        # data_x and data_y are arrays of images and their corresponding labels: {category_name: [images]}, labels_by_category: {category_name: [one-hot labels]}
+        self.data_x = {}
+        self.data_y = {}
+        # data_paths is a dictionary of image paths that correspond to data_x and data_y
+        self.img_paths = {}
 
         # same thing for the train/test/val datasets
         self.train_data_x, self.test_data_x, self.val_data_x = [], [], []
         self.train_data_y, self.test_data_y, self.val_data_y = [], [], []
-    
+        self.test_img_paths = []  # full paths for test images (will use later to fetch image names)
+
+        self.logger = logger or NullLogger()
+        self.logger.log_message(f"Dataset is set to {Path(self.dataset_path).name}")
+        self.logger.log_message(f"Dimensions of the dataset images will be {self.img_size}")
 
     def update_dataset_path(self, new_dataset_path):
         """
@@ -32,6 +42,7 @@ class DatasetManager:
         Alternatively, you can just initialize a new dataset manager for each dataset
         """
         self.dataset_path = new_dataset_path
+        self.logger.log_message(f"Dataset has been updated to {Path(self.dataset_path).name}")
 
     
 
@@ -53,8 +64,6 @@ class DatasetManager:
         """
         Returns an array of category names based on the folder names in the dataset_path
         """
-        # TODO: replace this hardcoded return value with one that dynamically searches the dataset folder
-        # the os library functions could be useful (e.g. os.listdir, os.path.join, e.t.c.)
 
         categories = []
         for i in os.listdir(self.dataset_path):
@@ -85,10 +94,12 @@ class DatasetManager:
         # normalize to [0, 1] for consistent training
         img_array = img_array.astype(np.float32) / 255.0
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
-        img_array = cv2.resize(img_array, self.img_size)
 
         if standardization_func is not None:
             img_array = standardization_func(img_array)
+        else:
+            img_array = cv2.resize(img_array, self.img_size)
+
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
@@ -99,15 +110,18 @@ class DatasetManager:
 
     def load_data(self):
         """
-        Given the dataset_path, standardize the images and load them with their labels into two arrays (data_x and data_y)
+        Given the dataset_path, standardize the images and load them with their labels into two dicts (data_x and data_y)
         """
-
-        # TODO: split the data evenly between each category
-        data_array_x, data_array_y = [], []
         dataset_categories = self.get_categories()
+
+        # reset the data
+        self.data_x, self.data_y, self.img_paths = {}, {}, {}
+        encoder = LabelEncoder()
+        encoder.fit(range(len(dataset_categories)))
         for category in tqdm(dataset_categories):
             category_path = os.path.join(self.dataset_path, category)
-            category_num = dataset_categories.index(category) # get unique number for each category
+            category_num = dataset_categories.index(category) # get a unique number for each category
+            data_array_x, data_array_y, img_path_array = [], [], []
             for img in os.listdir(category_path):
                 img_path = os.path.join(category_path, img)
                 try:
@@ -117,17 +131,20 @@ class DatasetManager:
                     continue
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
-        
-        # convert from category names -> numeric labels (integers) -> one-hot-encoding (0s and 1s)
-        encoder = LabelEncoder()
-        encoded_y = encoder.fit_transform(data_array_y)
-        one_hot_encoded_y = to_categorical(encoded_y) # convert to one-hot-encoding labels
-        
-        # load in the data from dataset_path
-        # data_y is one-hot-encoded (0s and 1s)
-        # Images are normalized in standardize_image()
-        self.data_x = np.asarray(data_array_x)
-        self.data_y = np.asarray(one_hot_encoded_y)
+                img_path_array.append(img_path)
+            self.data_x[category] = np.asarray(data_array_x)
+            encoded_array_y = encoder.transform(data_array_y)
+            one_hot_encoded_array_y = to_categorical(encoded_array_y, num_classes=len(dataset_categories))
+            self.data_y[category] = one_hot_encoded_array_y
+            self.img_paths[category] = img_path_array
+
+        total_images = sum(len(imgs) for imgs in self.data_x.values())
+        self.logger.log_message(f"\nLoaded {total_images} images from {Path(self.dataset_path).name}")
+        parts = []
+        for i in range(len(dataset_categories)):
+            count = len(self.data_x[self.get_category_name_from_index(i)])
+            parts.append(f"\t{self.get_category_name_from_index(i)}: {count} images")
+        self.logger.log_message(f"Number of images per category:\n" + "\n".join(parts))
     
 
 
@@ -144,33 +161,53 @@ class DatasetManager:
         assert(train_ratio >= 0 and test_ratio >= 0 and val_ratio >= 0)
         assert(train_ratio + test_ratio + val_ratio == 100)
 
-        # split between train and test
-        xTrain, xTest, yTrain, yTest = train_test_split(
-            np.asarray(self.data_x),
-            self.data_y,
-            test_size=(test_ratio + val_ratio)/100,
-            shuffle=True,
-            random_state = state_num
-        )
-
-        if val_ratio != 0: # val_ratio = 0 means that no validation set needed
-            xTest, xVal, yTest, yVal = train_test_split(
-                xTest,
-                yTest,
-                test_size=val_ratio/(test_ratio+val_ratio), # finds ratio between both values
+        # reset arrays
+        xTrain, xTest, xVal, yTrain, yTest, yVal = [], [], [], [], [], []
+        test_img_path_array = []
+        for category in self.get_categories():
+            category_data_x = self.data_x.get(category, np.array([]))
+            category_data_y = self.data_y.get(category, np.array([]))
+            category_img_paths = self.img_paths.get(category, np.array([]))
+            if len(category_data_x) == 0:
+                continue
+            
+            # instead of splitting by data, we split by indices and filter afterwards
+            indices = np.arange(len(category_data_x))
+            indices_train, indices_test = train_test_split(
+                indices,
+                test_size=(test_ratio + val_ratio) / 100,
                 shuffle=True,
-                random_state = state_num
+                random_state=state_num
             )
-        else:
-            xVal, yVal = [], []
-        
-        # assign the split data to the dataset manager's variables
-        self.train_data_x = xTrain
-        self.test_data_x = xTest
-        self.val_data_x = xVal
-        self.train_data_y = yTrain
-        self.test_data_y = yTest
-        self.val_data_y = yVal
+            indices_test, indices_val = (train_test_split(
+                indices_test,
+                test_size=val_ratio / (test_ratio + val_ratio),
+                shuffle=True,
+                random_state=state_num
+            ) if val_ratio != 0 else (indices_test, np.array([], dtype=int)))
+
+            xTrain.append(category_data_x[indices_train])
+            xTest.append(category_data_x[indices_test])
+            yTrain.append(category_data_y[indices_train])
+            yTest.append(category_data_y[indices_test])
+            if val_ratio != 0:
+                xVal.append(category_data_x[indices_val])
+                yVal.append(category_data_y[indices_val])
+            test_img_path_array.extend([category_img_paths[i] for i in indices_test])
+
+        self.train_data_x = np.concatenate(xTrain)
+        self.test_data_x = np.concatenate(xTest)
+        self.train_data_y = np.concatenate(yTrain)
+        self.test_data_y = np.concatenate(yTest)
+        self.val_data_x = np.concatenate(xVal) if val_ratio != 0 and xVal else np.array([])
+        self.val_data_y = np.concatenate(yVal) if val_ratio != 0 and yVal else np.array([])
+        self.test_data_paths = test_img_path_array
+
+        # log any important information
+        self.logger.log_message(f"\nData is split with train/test/validation ratio of {train_ratio}/{test_ratio}/{val_ratio}")
+        self.logger.log_message(f"\tTraining data: {len(self.train_data_x)} images")
+        self.logger.log_message(f"\tTesting data: {len(self.test_data_x)} images")
+        self.logger.log_message(f"\tValidation data: {len(self.val_data_x)} images")
 
     
 

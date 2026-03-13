@@ -23,10 +23,9 @@ class ResNet50Model(GarbageClassificationModel):
 
 
         # define and construct the model architecture
-
         model = models.Sequential()
 
-        # # ResNet expects [0,255] + ImageNet preprocessing
+        # # ResNet expects [0,255] as its image data
         # so, make sure that the DatasetManager does not divide pixel values by 255
 
         # we add ResNet50 to the model architecture
