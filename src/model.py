@@ -23,8 +23,11 @@ import pandas as pd
 
 
 class GarbageClassificationModel:
-    def __init__(self, dataset_manager, logger=None):
+    def __init__(self, dataset_manager, logger=None, rescale_pixel_values=True):
         self.dataset_manager: DatasetManager = dataset_manager
+        self.dataset_manager.rescale_pixel_values = rescale_pixel_values
+        self.rescale_pixel_values = rescale_pixel_values
+
         self.learning_rate: float = 0.001
         
         # set up the model to start training process
@@ -32,7 +35,15 @@ class GarbageClassificationModel:
 
         self.logger = logger or NullLogger()
         self.logger.log_message(f"\nThe model's name is {self.__class__.__name__}")
+
+        if self.rescale_pixel_values: 
+            # normalize to [0, 1]
+            self.logger.log_message(f"For this model, pixel values will be normalized to [0, 1]")
+        else:
+            # do not normalize (keep as the default [0, 255] range)
+            self.logger.log_message(f"For this model, pixel values will be kept as [0, 255]")
     
+
 
     def create_model(self):
         '''
@@ -134,11 +145,22 @@ class GarbageClassificationModel:
         )
         end_time = time.time()
         
-        self.logger.log_message(f"\nModel is trained for {epochs} epochs")
+        # log if early stopping happened
+        actual_epochs_run = len(model_history.history['loss'])
+        if actual_epochs_run < epochs:
+            self.logger.log_message(f"\nModel was planned to be trained for {epochs} epochs, but stopped at {actual_epochs_run} epochs to avoid overfitting)")
+        else:
+            self.logger.log_message(f"\nModel is trained for {epochs} epochs")
+
+        # also log the time it took to train the model
         total_seconds = end_time - start_time
         minutes, seconds = divmod(int(total_seconds), 60)
-        self.logger.log_message(f"\tTraining time: {minutes}min {seconds}sec")
+        self.logger.log_message(f"\tTraining time: {minutes} min {seconds} sec")
+        secs_per_epoch = total_seconds / actual_epochs_run
+        mins_per_epoch, secs_per_epoch = divmod(int(secs_per_epoch), 60)
+        self.logger.log_message(f"\t{mins_per_epoch}min {secs_per_epoch}sec per epoch")
 
+        # export the model if a path is defined
         if export_path is not None:
             self.model.save(export_path)
             self.logger.log_message(f"\nModel is saved at {Path(export_path).name}")

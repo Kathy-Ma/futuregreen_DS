@@ -15,10 +15,12 @@ class DatasetManager:
     This class takes in a path to the dataset and a target image size, and outputs a standardized dataset
     '''
 
-    def __init__(self, dataset_path, img_size, logger=None):
+    def __init__(self, dataset_path, img_size, rescale_pixel_values=False, logger=None):
         # set up properties/fields
         self.dataset_path: str = dataset_path
         self.img_size: tuple[int, int] = img_size
+        # this is used in standardize_image() to rescale the pixel values to [0,1]
+        self.rescale_pixel_values: bool = rescale_pixel_values
 
         # data_x and data_y are arrays of images and their corresponding labels: {category_name: [images]}, labels_by_category: {category_name: [one-hot labels]}
         self.data_x = {}
@@ -91,8 +93,13 @@ class DatasetManager:
             new_array: list - the standardized image as an array with dimensions img_size
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        # normalize to [0, 1] for consistent training
-        img_array = img_array.astype(np.float32) / 255.0
+        
+        # some models require to normalize the pixel values to [0, 1], while others do not
+        # the model is in charge of deciding whether to normalize the pixel values or not
+        if self.rescale_pixel_values: 
+            # normalize to [0, 1]
+            img_array = img_array.astype(np.float32) / 255.0
+        
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
 
         if standardization_func is not None:
@@ -138,6 +145,7 @@ class DatasetManager:
             self.data_y[category] = one_hot_encoded_array_y
             self.img_paths[category] = img_path_array
 
+        # log some relevant information
         total_images = sum(len(imgs) for imgs in self.data_x.values())
         self.logger.log_message(f"\nLoaded {total_images} images from {Path(self.dataset_path).name}")
         parts = []

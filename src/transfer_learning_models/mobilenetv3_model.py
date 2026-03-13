@@ -1,10 +1,16 @@
 from tensorflow.keras.applications import MobileNetV3Small
 from tensorflow.keras import layers, models
 
-
 from model import GarbageClassificationModel
 
+
+
 class MobileNetV3Model(GarbageClassificationModel):
+    def __init__(self, dataset_manager, logger=None):
+        super().__init__(dataset_manager, logger=logger)
+        # MobileNetV3 expects [0,255] as its image data
+        self.dataset_manager.rescale_pixel_values = False
+
     def create_model(self):
         dm = self.dataset_manager
 

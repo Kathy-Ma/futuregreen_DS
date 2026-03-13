@@ -4,6 +4,11 @@ from tensorflow.keras import layers, models
 from model import GarbageClassificationModel
 
 class ResNet50Model(GarbageClassificationModel):
+    def __init__(self, dataset_manager, logger=None):
+        super().__init__(dataset_manager, logger=logger)
+        # ResNet50 expects [0,255] as its image data, so don't rescale the image's pixel values
+        self.dataset_manager.rescale_pixel_values = False
+
     def create_model(self):
         dm = self.dataset_manager
 

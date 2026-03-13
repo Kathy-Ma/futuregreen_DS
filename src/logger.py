@@ -42,7 +42,7 @@ class Logger:
             None
         """
         with open(self.logging_file_path, "a") as f:
-            f.write(message + "\n")
+            f.write(str(message) + "\n")
 
 
 

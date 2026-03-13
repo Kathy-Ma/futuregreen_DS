@@ -3,7 +3,14 @@ from tensorflow.keras import layers, models
 
 from model import GarbageClassificationModel
 
+
+
 class NASNetMobileModel(GarbageClassificationModel):
+    def __init__(self, dataset_manager, logger=None):
+        super().__init__(dataset_manager, logger=logger)
+        # NASNetMobile expects [0,1] as its image data
+        self.dataset_manager.rescale_pixel_values = True
+
     def create_model(self):
         dm = self.dataset_manager
         
