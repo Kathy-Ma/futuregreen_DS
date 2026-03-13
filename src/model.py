@@ -53,7 +53,7 @@ class GarbageClassificationModel:
 
         # define the model's architecture
         model = models.Sequential()
-        model.add(layers.Input(shape=(dm.img_size[0], dm.img_size[1], 3)))
+        model.add(layers.Input(shape=(dm.img_size[0], dm.img_size[1], 1)))
 
         model.add(layers.Conv2D(32, (3,3), activation='relu'))
         model.add(layers.MaxPooling2D((2,2)))

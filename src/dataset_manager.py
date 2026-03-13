@@ -60,8 +60,11 @@ class DatasetManager:
         Returns:
             new_array: list - the standardized image as an array with dimensions img_size
         """
-        img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        # Convert Grayscale
+        img_array = cv2.imread(img_path, 0)
+        equal = cv2.equalizeHist(img_array)
+        #img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        #img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
         
         # Resize to target size first to handle images of any input size consistently (dont think this worked)
         #img_array = cv2.resize(img_array, self.img_size, interpolation=cv2.INTER_AREA)
@@ -82,14 +85,21 @@ class DatasetManager:
 
         #border_color = [255, 255, 255]
         #img_array = cv2.copyMakeBorder(img_array, top_pad, bottom_pad, left_pad, right_pad, cv2.BORDER_CONSTANT)
-        img_array = cv2.resize(img_array, self.img_size)
+        #img_array = cv2.resize(img_array, self.img_size)
         # normalize to [0, 1] for consistent training
-        img_array = img_array.astype(np.float32) / 255.0
+        #img_array = img_array.astype(np.float32) / 255.0
+
+        # For Hist equalization
+        equal = cv2.resize(equal, self.img_size)
+        # normalize to [0, 1] for consistent training
+        equal = equal.astype(np.float32) / 255.0
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
-        return img_array
+        #return img_array
+
+        return equal
     
 
 
