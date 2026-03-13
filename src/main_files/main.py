@@ -59,22 +59,23 @@ if __name__ == "__main__":
     # m22.load_model_from_file(MODEL_PATH_1)
     # m22.measure_metrics()
 
-    DATASET_DIR = "datasets/dataset_vers1/"
+    DATASET_DIR = "datasets/benchmark_dataset/"
     NORMALIZED_IMAGE_SIZE = (150, 150)
 
-    logger = Logger("resnet50_model")
+    logger = Logger("demo_model")
     dl = DatasetManager(DATASET_DIR, NORMALIZED_IMAGE_SIZE, logger=logger)
     dl.load_data()
     dl.split_data(60, 20, 20)
-    m = ResNet50Model(dl, logger=logger)
+    m = GarbageClassificationModel(dl, logger=logger)
     m.load_model_from_file("model_registry/resnet50_model.keras")
     # model_history = m.train_model(
-    #     epochs=10,
+    #     epochs=5,
     #     batch_size=32,
-    #     export_path="model_registry/resnet50_model.keras"
+    #     export_path="model_registry/demo_model.keras"
     # )
     # m.plot_history(model_history)
     m.measure_metrics()
     m.predict_img("datasets/benchmark_dataset/organics/organics_1.jpg")
     m.random_preds(3, 6)
     m.random_preds(8, 4)
+    m.random_preds(10, 10)
