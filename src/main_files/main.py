@@ -65,7 +65,7 @@ if __name__ == "__main__":
     DATASET_DIR = "datasets/dataset_vers2/"
     # NORMALIZED_IMAGE_SIZE = (150, 150)
 
-    model_classes = [MobileNetV3Model, NASNetMobileModel]
+    model_classes = [MobileNetV3Model]
     image_sizes = [100, 125, 150, 175, 200, 225, 250, 275, 300]
     
     for model_class in model_classes:
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             )
             m.plot_history(model_history)
             m.measure_metrics()
-            m.predict_img("datasets/dataset_vers1/organic/organic_1.jpg")
+            m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
             m.random_preds(3, 6)
             m.random_preds(8, 4)
     
