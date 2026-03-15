@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # NORMALIZED_IMAGE_SIZE = (150, 150)
 
     model_classes = [MobileNetV3Model, NASNetMobileModel]
-    image_sizes = [150, 175, 200, 225, 250, 275, 300]
+    image_sizes = [125, 150, 175, 200, 225, 250, 275, 300]
     
     for model_class in model_classes:
         for image_dim in image_sizes:
