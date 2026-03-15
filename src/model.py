@@ -41,7 +41,7 @@ class GarbageClassificationModel:
         self.logger = logger or NullLogger()
         self.logger.log_message(f"\nThe model's name is {self.__class__.__name__}")
         if self.dataset_manager.preprocess_input_func is not None:
-            self.logger.log_message(f"Using builtin, model-specific preprocess_input function for pre-processing images)")
+            self.logger.log_message(f"Using builtin, model-specific preprocess_input function to pre-process images")
         else:
             self.logger.log_message(f"Pixel values will be in range [0, 255]")
 
