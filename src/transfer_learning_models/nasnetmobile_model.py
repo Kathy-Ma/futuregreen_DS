@@ -1,4 +1,5 @@
 from tensorflow.keras.applications import NASNetMobile
+from tensorflow.keras.applications.nasnet import preprocess_input
 from tensorflow.keras import layers, models
 
 from model import GarbageClassificationModel
@@ -6,10 +7,10 @@ from model import GarbageClassificationModel
 
 
 class NASNetMobileModel(GarbageClassificationModel):
+    preprocess_input_func = preprocess_input
+
     def __init__(self, dataset_manager, logger=None):
         super().__init__(dataset_manager, logger=logger)
-        # NASNetMobile expects [0,1] as its image data
-        self.dataset_manager.rescale_pixel_values = True
 
     def create_model(self):
         dm = self.dataset_manager

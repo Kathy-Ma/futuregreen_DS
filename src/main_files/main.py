@@ -65,7 +65,7 @@ if __name__ == "__main__":
     DATASET_DIR = "datasets/dataset_vers1/"
     # NORMALIZED_IMAGE_SIZE = (150, 150)
 
-    model_classes = [MobileNetV3Model, NASNetMobileModel]
+    model_classes = [ResNet50Model]
     image_sizes = [125, 150, 175, 200, 225, 250, 275, 300]
     
     for model_class in model_classes:
@@ -74,10 +74,9 @@ if __name__ == "__main__":
             export_name = f"{model_class.__name__}_imgsize_{img_size}"
             logger = Logger(export_name)
             dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
+            m = model_class(dl, logger=logger)
             dl.load_data()
             dl.split_data(60, 20, 20)
-
-            m = model_class(dl, logger=logger)
             model_history = m.train_model(
                 epochs=25,
                 batch_size=32,

@@ -15,12 +15,15 @@ class DatasetManager:
     This class takes in a path to the dataset and a target image size, and outputs a standardized dataset
     '''
 
-    def __init__(self, dataset_path, img_size, rescale_pixel_values=False, logger=None):
+    def __init__(self, dataset_path, img_size, logger=None, preprocess_input_func=None):
         # set up properties/fields
         self.dataset_path: str = dataset_path
         self.img_size: tuple[int, int] = img_size
-        # this is used in standardize_image() to rescale the pixel values to [0,1]
-        self.rescale_pixel_values: bool = rescale_pixel_values
+        
+        # model-specific preprocessing (e.g. keras.applications.nasnet.preprocess_input)
+        self.preprocess_input_func: callable = preprocess_input_func
+
+
 
         # data_x and data_y are arrays of images and their corresponding labels: {category_name: [images]}, labels_by_category: {category_name: [one-hot labels]}
         self.data_x = {}
@@ -36,6 +39,8 @@ class DatasetManager:
         self.logger = logger or NullLogger()
         self.logger.log_message(f"Dataset is set to {Path(self.dataset_path).name}")
         self.logger.log_message(f"Dimensions of the dataset images will be {self.img_size}")
+
+
 
     def update_dataset_path(self, new_dataset_path):
         """
@@ -93,13 +98,6 @@ class DatasetManager:
             new_array: list - the standardized image as an array with dimensions img_size
         """
         img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        
-        # some models require to normalize the pixel values to [0, 1], while others do not
-        # the model is in charge of deciding whether to normalize the pixel values or not
-        if self.rescale_pixel_values: 
-            # normalize to [0, 1]
-            img_array = img_array.astype(np.float32) / 255.0
-        
         img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
 
         if standardization_func is not None:
@@ -107,6 +105,9 @@ class DatasetManager:
         else:
             img_array = cv2.resize(img_array, self.img_size)
 
+        # if our model has a specific preprocessing function, apply it to the image
+        if self.preprocess_input_func is not None:
+            img_array = self.preprocess_input_func(img_array.astype(np.float32))
 
         # TODO: replace/update this functionality
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
