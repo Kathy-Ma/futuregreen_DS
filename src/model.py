@@ -300,13 +300,14 @@ class GarbageClassificationModel:
 
         text_colour = self._get_text_colour(pred_label, true_label)
         fig, axes = plt.subplots(1, 2, figsize=(10, 8))
-        # display the raw image
+        # display the raw image (original from file)
         axes[0].imshow(raw_img)
         axes[0].set_title(f'Raw Image: ({raw_img.shape[0]} x {raw_img.shape[1]})')
         axes[0].axis('off')
-        # display the standardized image
-        axes[1].imshow(standardized_img)
-        axes[1].set_title(f'Standardized Image ({standardized_img.shape[0]} x {standardized_img.shape[1]})')
+        # display the standardized image (resized, no model preprocessing - for correct display)
+        display_img = self.dataset_manager.manually_standardize_image(img_path)
+        axes[1].imshow(display_img)
+        axes[1].set_title(f'Standardized Image ({display_img.shape[0]} x {display_img.shape[1]})')
         axes[1].axis('off')
 
         fig.suptitle(f"Image: {Path(img_path).name}", fontsize=12)
@@ -361,7 +362,8 @@ class GarbageClassificationModel:
                 color=color,
                 fontsize=10
             )
-            ax.imshow(sample_images[i])
+            # use raw image for display (preprocessed images look wrong in imshow)
+            ax.imshow(dm.manually_standardize_image(sample_paths[i]) if sample_paths else sample_images[i])
             ax.axis('off')
 
         for i in range(num_samples, rows * columns):

@@ -78,7 +78,7 @@ if __name__ == "__main__":
             dl.load_data()
             dl.split_data(60, 20, 20)
             model_history = m.train_model(
-                epochs=25,
+                epochs=1,
                 batch_size=32,
                 export_path=f"model_registry/{export_name}.keras"
             )

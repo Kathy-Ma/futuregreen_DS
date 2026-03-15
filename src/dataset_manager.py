@@ -97,13 +97,7 @@ class DatasetManager:
         Returns:
             new_array: list - the standardized image as an array with dimensions img_size
         """
-        img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
-
-        if standardization_func is not None:
-            img_array = standardization_func(img_array)
-        else:
-            img_array = cv2.resize(img_array, self.img_size)
+        img_array = self.manually_standardize_image(img_path, standardization_func)
 
         # if our model has a specific preprocessing function, apply it to the image
         if self.preprocess_input_func is not None:
@@ -113,7 +107,21 @@ class DatasetManager:
         # right now, we are just using cv2 to resize the image via stretching, but try experimenting with different image standardization techniques
         # some examples: cropping, padding, other things inside the image standardization research doc
         return img_array
-    
+
+    def manually_standardize_image(self, img_path, standardization_func=None):
+        """
+        Load an image for display (no model-specific preprocessing).
+        Returns RGB array in [0, 255] resized to img_size, suitable for imshow.
+        """
+        img_array = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        if img_array is None:
+            raise ValueError(f"Could not read image: {img_path}")
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
+        if standardization_func is not None:
+            img_array = standardization_func(img_array)
+        else:
+            img_array = cv2.resize(img_array, self.img_size)
+        return img_array
 
 
     def load_data(self):
