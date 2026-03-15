@@ -62,10 +62,10 @@ if __name__ == "__main__":
     # m22.load_model_from_file(MODEL_PATH_1)
     # m22.measure_metrics()
 
-    DATASET_DIR = "datasets/dataset_vers1/"
+    DATASET_DIR = "datasets/dataset_vers2/"
     # NORMALIZED_IMAGE_SIZE = (150, 150)
 
-    model_classes = [NASNetMobileModel]
+    model_classes = [MobileNetV3Model, NASNetMobileModel]
     image_sizes = [100, 125, 150, 175, 200, 225, 250, 275, 300]
     
     for model_class in model_classes:
