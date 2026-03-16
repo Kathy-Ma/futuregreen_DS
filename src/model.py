@@ -248,7 +248,29 @@ class GarbageClassificationModel:
 
         self.logger.save_figure("confusion_matrix.png")
 
+    def metrics_for_category(self, category_name):
+        """
+        Get correct and wrong prediction counts for a single category.
+        Returns (correct, wrong) for images whose true label is category_name.
+        """
+        dm = self.dataset_manager
+        categories = dm.get_categories()
+        if category_name not in categories:
+            raise ValueError(f"Unknown category: {category_name}. Available: {categories}")
+        cat_index = categories.index(category_name)
 
+        y_true = np.argmax(dm.test_data_y, axis=1)
+        mask = y_true == cat_index
+        if not np.any(mask):
+            return 0, 0
+
+        x_subset = dm.test_data_x[mask]
+        prediction = self.model.predict(x_subset, verbose=0)
+        y_pred = np.argmax(prediction, axis=1)
+
+        correct = np.sum(y_pred == cat_index)
+        wrong = len(y_pred) - correct
+        return int(correct), int(wrong)
 
     def _predict_batch(self, images):
         """Predict on images. Returns (predictions array, list of predicted category names)."""

@@ -10,7 +10,8 @@ class NullLogger:
         print(message)
 
     def save_figure(self, filename):
-        plt.show()  # display instead of saving when no logger
+        pass
+        # plt.show()  # display instead of saving when no logger
 
     def save_image(self, image, image_name):
         pass
