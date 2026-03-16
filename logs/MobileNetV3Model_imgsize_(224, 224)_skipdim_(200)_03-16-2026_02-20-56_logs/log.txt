@@ -1,0 +1,50 @@
+Dataset is set to dataset_vers2
+Dimensions of the dataset images will be (224, 224)
+
+The model's name is MobileNetV3Model
+Using builtin, model-specific preprocess_input function to pre-process images
+
+Loaded 6534 images from dataset_vers2
+Skipped 6852 images, in which at least one dimension is less than 200 pixels
+Number of images per category:
+	paper: 2024 images (818 skipped)
+	metal: 1068 images (800 skipped)
+	cardboard: 862 images (629 skipped)
+	organic: 380 images (1698 skipped)
+	trash: 293 images (852 skipped)
+	glass: 281 images (312 skipped)
+	plastic: 1626 images (1743 skipped)
+
+Data is split with train/test/validation ratio of 60/20/20
+	Training data: 3917 images
+	Testing data: 1307 images
+	Validation data: 1310 images
+
+Model was planned to be trained for 25 epochs, but stopped at 16 epochs to avoid overfitting)
+	Training time: 4 min 32 sec
+	0min 17sec per epoch
+
+Model is saved at MobileNetV3Model_imgsize_(224, 224)_skipdim_(200).keras
+
+Prediction summary:
+	Total images predicted: 1307
+	Correct: 1132
+	Wrong: 175
+	Time: 5.41s (0.0041s per image)
+	Accuracy: 0.8661055853098699
+
+Classification Report:
+              precision    recall  f1-score   support
+
+       paper       0.92      0.94      0.93       405
+       metal       0.84      0.88      0.86       214
+   cardboard       0.87      0.92      0.89       172
+     organic       0.75      0.83      0.79        76
+       trash       0.88      0.59      0.71        59
+       glass       0.68      0.46      0.55        56
+     plastic       0.87      0.87      0.87       325
+
+    accuracy                           0.87      1307
+   macro avg       0.83      0.78      0.80      1307
+weighted avg       0.86      0.87      0.86      1307
+
