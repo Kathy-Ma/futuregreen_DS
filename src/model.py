@@ -23,10 +23,15 @@ import pandas as pd
 
 
 class GarbageClassificationModel:
-    def __init__(self, dataset_manager, logger=None, rescale_pixel_values=True):
+    # Override in subclasses; used when creating DatasetManager so data is preprocessed at load time
+    preprocess_input_func = None
+
+    def __init__(self, dataset_manager, logger=None):
         self.dataset_manager: DatasetManager = dataset_manager
-        self.dataset_manager.rescale_pixel_values = rescale_pixel_values
-        self.rescale_pixel_values = rescale_pixel_values
+        
+        # assign model-specific preprocessing to dataset manager (used during load_data)
+        # we assign this model's preprocess_input_func to the dataset manager's preprocess_input_func
+        self.dataset_manager.preprocess_input_func = self.__class__.preprocess_input_func
 
         self.learning_rate: float = 0.001
         
@@ -35,15 +40,10 @@ class GarbageClassificationModel:
 
         self.logger = logger or NullLogger()
         self.logger.log_message(f"\nThe model's name is {self.__class__.__name__}")
-
-        if self.rescale_pixel_values: 
-            # normalize to [0, 1]
-            self.logger.log_message(f"For this model, pixel values will be normalized to [0, 1]")
+        if self.dataset_manager.preprocess_input_func is not None:
+            self.logger.log_message(f"Using builtin, model-specific preprocess_input function to pre-process images")
         else:
-            # do not normalize (keep as the default [0, 255] range)
-            self.logger.log_message(f"For this model, pixel values will be kept as [0, 255]")
-    
-
+            self.logger.log_message(f"Pixel values will be in range [0, 255]")
 
     def create_model(self):
         '''
@@ -134,7 +134,7 @@ class GarbageClassificationModel:
         dm = self.dataset_manager
 
         start_time = time.time()
-        # train the model
+        # train the model (data already preprocessed in DatasetManager)
         model_history = self.model.fit(
             dm.train_data_x,
             dm.train_data_y,
@@ -248,7 +248,29 @@ class GarbageClassificationModel:
 
         self.logger.save_figure("confusion_matrix.png")
 
+    def metrics_for_category(self, category_name):
+        """
+        Get correct and wrong prediction counts for a single category.
+        Returns (correct, wrong) for images whose true label is category_name.
+        """
+        dm = self.dataset_manager
+        categories = dm.get_categories()
+        if category_name not in categories:
+            raise ValueError(f"Unknown category: {category_name}. Available: {categories}")
+        cat_index = categories.index(category_name)
 
+        y_true = np.argmax(dm.test_data_y, axis=1)
+        mask = y_true == cat_index
+        if not np.any(mask):
+            return 0, 0
+
+        x_subset = dm.test_data_x[mask]
+        prediction = self.model.predict(x_subset, verbose=0)
+        y_pred = np.argmax(prediction, axis=1)
+
+        correct = np.sum(y_pred == cat_index)
+        wrong = len(y_pred) - correct
+        return int(correct), int(wrong)
 
     def _predict_batch(self, images):
         """Predict on images. Returns (predictions array, list of predicted category names)."""
@@ -300,13 +322,14 @@ class GarbageClassificationModel:
 
         text_colour = self._get_text_colour(pred_label, true_label)
         fig, axes = plt.subplots(1, 2, figsize=(10, 8))
-        # display the raw image
+        # display the raw image (original from file)
         axes[0].imshow(raw_img)
         axes[0].set_title(f'Raw Image: ({raw_img.shape[0]} x {raw_img.shape[1]})')
         axes[0].axis('off')
-        # display the standardized image
-        axes[1].imshow(standardized_img)
-        axes[1].set_title(f'Standardized Image ({standardized_img.shape[0]} x {standardized_img.shape[1]})')
+        # display the standardized image (resized, no model preprocessing - for correct display)
+        display_img = self.dataset_manager.manually_standardize_image(img_path)
+        axes[1].imshow(display_img)
+        axes[1].set_title(f'Standardized Image ({display_img.shape[0]} x {display_img.shape[1]})')
         axes[1].axis('off')
 
         fig.suptitle(f"Image: {Path(img_path).name}", fontsize=12)
@@ -361,7 +384,8 @@ class GarbageClassificationModel:
                 color=color,
                 fontsize=10
             )
-            ax.imshow(sample_images[i])
+            # use raw image for display (preprocessed images look wrong in imshow)
+            ax.imshow(dm.manually_standardize_image(sample_paths[i]) if sample_paths else sample_images[i])
             ax.axis('off')
 
         for i in range(num_samples, rows * columns):
