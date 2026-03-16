@@ -124,14 +124,18 @@ class DatasetManager:
         return img_array
 
 
-    def load_data(self):
+    def load_data(self, min_dim=None):
         """
         Given the dataset_path, standardize the images and load them with their labels into two dicts (data_x and data_y)
+
+        Args:
+            min_dim: int or None - if set, skip images whose smaller dimension (min(width, height)) is below this value
         """
         dataset_categories = self.get_categories()
 
         # reset the data
         self.data_x, self.data_y, self.img_paths = {}, {}, {}
+        too_small_images_by_category = {cat: 0 for cat in dataset_categories}
         encoder = LabelEncoder()
         encoder.fit(range(len(dataset_categories)))
         for category in tqdm(dataset_categories):
@@ -141,10 +145,22 @@ class DatasetManager:
             for img in os.listdir(category_path):
                 img_path = os.path.join(category_path, img)
                 try:
+                    # we skip an image if it has dimensions that are too small
+                    if min_dim is not None:
+                        preview = cv2.imread(img_path, cv2.IMREAD_COLOR)
+                        if preview is None:
+                            too_small_images_by_category[category] += 1
+                            continue
+                        if min(preview.shape[0], preview.shape[1]) < min_dim:
+                            too_small_images_by_category[category] += 1
+                            continue
                     standardized_img_array = self.standardize_image(img_path)
-                except:
-                    print(f"Error loading image from: {img_path}, skipping this...")
+                except Exception as e:
+                    # we skip an image if there is an error loading it
+                    print(f"Error loading image from: {img_path}, skipping this... ({e})")
+                    too_small_images_by_category[category] += 1
                     continue
+                # if the image is not skipped, we add it to the data
                 data_array_x.append(standardized_img_array)
                 data_array_y.append(category_num)
                 img_path_array.append(img_path)
@@ -156,11 +172,19 @@ class DatasetManager:
 
         # log some relevant information
         total_images = sum(len(imgs) for imgs in self.data_x.values())
+        total_skipped = sum(too_small_images_by_category.values())
         self.logger.log_message(f"\nLoaded {total_images} images from {Path(self.dataset_path).name}")
+        if min_dim is not None:
+            self.logger.log_message(f"Skipped {total_skipped} images, in which at least one dimension is less than {min_dim} pixels")
         parts = []
         for i in range(len(dataset_categories)):
-            count = len(self.data_x[self.get_category_name_from_index(i)])
-            parts.append(f"\t{self.get_category_name_from_index(i)}: {count} images")
+            cat = self.get_category_name_from_index(i)
+            count = len(self.data_x[cat])
+            if min_dim is not None:
+                skipped = too_small_images_by_category[cat]
+                parts.append(f"\t{cat}: {count} images ({skipped} skipped)")
+            else:
+                parts.append(f"\t{cat}: {count} images")
         self.logger.log_message(f"Number of images per category:\n" + "\n".join(parts))
     
 

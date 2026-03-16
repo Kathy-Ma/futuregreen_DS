@@ -22,30 +22,52 @@ if __name__ == "__main__":
     # ================================================================ TRAINING THE MODELS ================================================================
     
     DATASET_DIR = "datasets/dataset_vers2/"
-    NORMALIZED_IMAGE_SIZE = (200, 200)
 
-    model_classes = [MobileNetV3Model, NASNetMobileModel]
+    model_classes = [MobileNetV3Model]
     image_sizes = [224]
+    
+    # for model_class in model_classes:
+    #     for image_dim in image_sizes: # decided on 224x224 for the image size (it works the best)
+    #         img_size = (image_dim, image_dim)
+    #         export_name = f"{model_class.__name__}_imgsize_{img_size}"
+    #         logger = Logger(export_name)
+    #         dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
+    #         m = model_class(dl, logger=logger)
+    #         dl.load_data(min_dim=100)
+    #         dl.split_data(60, 20, 20)
+    #         model_history = m.train_model(
+    #             epochs=25,
+    #             batch_size=32,
+    #             export_path=f"model_registry/{export_name}.keras"
+    #         )
+    #         m.plot_history(model_history)
+    #         m.measure_metrics()
+    #         m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
+    #         m.random_preds(3, 6)
+    #         m.random_preds(8, 4)
+
+    min_dims = [10, 30, 50, 70, 90, 110, 130, 150, 170, 190]
     
     for model_class in model_classes:
         for image_dim in image_sizes: # decided on 224x224 for the image size (it works the best)
             img_size = (image_dim, image_dim)
-            export_name = f"{model_class.__name__}_imgsize_{img_size}"
-            logger = Logger(export_name)
-            dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
-            m = model_class(dl, logger=logger)
-            dl.load_data()
-            dl.split_data(60, 20, 20)
-            model_history = m.train_model(
-                epochs=25,
-                batch_size=32,
-                export_path=f"model_registry/{export_name}.keras"
-            )
-            m.plot_history(model_history)
-            m.measure_metrics()
-            m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
-            m.random_preds(3, 6)
-            m.random_preds(8, 4)
+            for min_dim in min_dims:
+                export_name = f"{model_class.__name__}_imgsize_{img_size}_skipdim_({min_dim})"
+                logger = Logger(export_name)
+                dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
+                # m = model_class(dl, logger=logger)
+                dl.load_data(min_dim=min_dim)
+                # dl.split_data(60, 20, 20)
+                # model_history = m.train_model(
+                #     epochs=25,
+                #     batch_size=32,
+                #     export_path=f"model_registry/{export_name}.keras"
+                # )
+                # m.plot_history(model_history)
+                # m.measure_metrics()
+                # m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
+                # m.random_preds(3, 6)
+                # m.random_preds(8, 4)
 
 
 
