@@ -170,6 +170,9 @@ class DatasetManager:
             self.data_y[category] = one_hot_encoded_array_y
             self.img_paths[category] = img_path_array
 
+        # store for external access (e.g. plotting % removed)
+        self.skipped_by_category = too_small_images_by_category
+
         # log some relevant information
         total_images = sum(len(imgs) for imgs in self.data_x.values())
         total_skipped = sum(too_small_images_by_category.values())

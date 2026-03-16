@@ -148,7 +148,7 @@ class GarbageClassificationModel:
         # log if early stopping happened
         actual_epochs_run = len(model_history.history['loss'])
         if actual_epochs_run < epochs:
-            self.logger.log_message(f"\nModel was planned to be trained for {epochs} epochs, but stopped at {actual_epochs_run} epochs to avoid overfitting)")
+            self.logger.log_message(f"\nModel was planned to be trained for {epochs} epochs, but stopped at {actual_epochs_run} epochs to avoid overfitting")
         else:
             self.logger.log_message(f"\nModel is trained for {epochs} epochs")
 
