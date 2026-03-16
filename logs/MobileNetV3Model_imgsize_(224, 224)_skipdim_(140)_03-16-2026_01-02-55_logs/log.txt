@@ -1,0 +1,13 @@
+Dataset is set to dataset_vers2
+Dimensions of the dataset images will be (224, 224)
+
+Loaded 10920 images from dataset_vers2
+Skipped 2466 images, in which at least one dimension is less than 140 pixels
+Number of images per category:
+	paper: 2724 images (118 skipped)
+	metal: 1496 images (372 skipped)
+	cardboard: 1357 images (134 skipped)
+	organic: 1506 images (572 skipped)
+	trash: 838 images (307 skipped)
+	glass: 398 images (195 skipped)
+	plastic: 2601 images (768 skipped)
