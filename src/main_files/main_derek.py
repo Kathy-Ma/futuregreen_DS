@@ -107,6 +107,7 @@ if __name__ == "__main__":
 
 
     # ================================================================ TRAINING THE MODELS WITH MINIMUM DIMENSIONS ================================================================
+    DATASET_DIR = "datasets/dataset_vers2/"
     model_classes = [MobileNetV3Model]
     image_sizes = [224]
     min_dims = [10, 30, 50, 70, 90, 110, 130, 150, 170, 190]
