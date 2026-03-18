@@ -272,7 +272,7 @@ class GarbageClassificationModel:
         wrong = len(y_pred) - correct
         return int(correct), int(wrong)
 
-    def _predict_batch(self, images):
+    def predict_img_batch(self, images):
         """Predict on images. Returns (predictions array, list of predicted category names)."""
         predictions = self.model.predict(images, verbose=0)
         pred_indices = np.argmax(predictions, axis=1)
@@ -361,7 +361,7 @@ class GarbageClassificationModel:
         sample_images = x_test[random_indices]
         sample_true_labels = np.argmax(y_test[random_indices], axis=1)
         sample_paths = [dm.test_data_paths[j] for j in random_indices] if getattr(dm, 'test_data_paths', None) else None
-        predictions, pred_labels = self._predict_batch(sample_images)
+        predictions, pred_labels = self.predict_img_batch(sample_images)
 
         fig, axes = plt.subplots(rows, columns, figsize=(4 * columns, 4 * rows))
         if rows == 1 and columns == 1:
