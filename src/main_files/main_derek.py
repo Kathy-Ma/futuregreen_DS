@@ -20,13 +20,27 @@ from logger import Logger
 if __name__ == "__main__":
     
 
-    DATASET_DIR = "datasets/dataset_vers2/"
+    DATASET_DIR = "datasets/dataset_vers3/"
 
-    dm = DatasetManager("datasets/dataset_vers1/", (224, 224))
-    print(dm.get_categories())
+    logger = Logger("dataset_vers3")
+    dm = DatasetManager(DATASET_DIR, (224, 224), logger=logger)
+    m = ResNet50Model(dm, logger=logger)
+    dm.load_data()
+    dm.split_data(60, 20, 20)
+    model_history = m.train_model(
+        epochs=20,
+        batch_size=32,
+        export_path="model_registry/dataset_vers3_resnet50.keras"
+    )
+    m.plot_history(model_history)
+    m.measure_metrics()
+    m.predict_img("datasets/dataset_vers3/organic/organic_1.jpg")
+    m.random_preds(3, 6)
+    m.random_preds(8, 4)
 
-    dm = DatasetManager("datasets/dataset_vers2/", (224, 224))
-    print(dm.get_categories())
+
+
+
 
     # model_classes = [MobileNetV3Model]
     # image_sizes = [224] # decided on 224x224 for the image size (it works the best)

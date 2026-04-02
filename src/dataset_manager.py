@@ -82,7 +82,7 @@ class DatasetManager:
             if os.path.isdir(path) and i not in categories:
                 # add the category to the categories list
                 categories.append(i)
-        return categories
+        return sorted(categories)
 
     
 

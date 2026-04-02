@@ -1,0 +1,20 @@
+Dataset is set to dataset_vers3
+Dimensions of the dataset images will be (224, 224)
+
+The model's name is ResNet50Model
+Using builtin, model-specific preprocess_input function to pre-process images
+
+Loaded 21119 images from dataset_vers3
+Number of images per category:
+	cardboard: 3017 images
+	glass: 3017 images
+	metal: 3017 images
+	organic: 3017 images
+	paper: 3017 images
+	plastic: 3017 images
+	trash: 3017 images
+
+Data is split with train/test/validation ratio of 60/20/20
+	Training data: 12670 images
+	Testing data: 4221 images
+	Validation data: 4228 images
