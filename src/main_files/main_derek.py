@@ -22,29 +22,35 @@ if __name__ == "__main__":
 
     DATASET_DIR = "datasets/dataset_vers2/"
 
-    model_classes = [MobileNetV3Model]
-    image_sizes = [224] # decided on 224x224 for the image size (it works the best)
-    min_dim = 50
+    dm = DatasetManager("datasets/dataset_vers1/", (224, 224))
+    print(dm.get_categories())
+
+    dm = DatasetManager("datasets/dataset_vers2/", (224, 224))
+    print(dm.get_categories())
+
+    # model_classes = [MobileNetV3Model]
+    # image_sizes = [224] # decided on 224x224 for the image size (it works the best)
+    # min_dim = 50
     
-    for model_class in model_classes:
-        for image_dim in image_sizes:
-            img_size = (image_dim, image_dim)
-            export_name = f"{model_class.__name__}_imgsize_{img_size}_mindim_({min_dim})"
-            logger = Logger(export_name)
-            dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
-            m = model_class(dl, logger=logger)
-            dl.load_data(min_dim=min_dim)
-            dl.split_data(60, 20, 20)
-            model_history = m.train_model(
-                epochs=1,
-                batch_size=32,
-                export_path=f"model_registry/{export_name}.keras"
-            )
-            m.plot_history(model_history)
-            m.measure_metrics()
-            m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
-            m.random_preds(3, 6)
-            m.random_preds(8, 4)
+    # for model_class in model_classes:
+    #     for image_dim in image_sizes:
+    #         img_size = (image_dim, image_dim)
+    #         export_name = f"FINAL_VER_{model_class.__name__}_datasetvers2_imgsize_{img_size}_mindim_({min_dim})"
+    #         logger = Logger(export_name)
+    #         dl = DatasetManager(DATASET_DIR, img_size, logger=logger)
+    #         m = model_class(dl, logger=logger)
+    #         dl.load_data(min_dim=min_dim)
+    #         dl.split_data(60, 20, 20)
+    #         model_history = m.train_model(
+    #             epochs=25,
+    #             batch_size=32,
+    #             export_path=f"model_registry/{export_name}.keras"
+    #         )
+    #         m.plot_history(model_history)
+    #         m.measure_metrics()
+    #         m.predict_img("datasets/dataset_vers2/organic/organic_1.jpg")
+    #         m.random_preds(3, 6)
+    #         m.random_preds(8, 4)
 
 
     # TEST 1:  testing which image size to normalize to for the model to ingest
